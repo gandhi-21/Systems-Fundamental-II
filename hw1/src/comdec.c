@@ -92,5 +92,74 @@ int decompress(FILE *in, FILE *out) {
 int validargs(int argc, char **argv)
 {
     // To be implemented.
-    return -1;
+
+    char* helpArg = "-h";
+    char* compressArg = "-c";
+    char* decompressArg = "-d";
+    char* blocksizeArg = "-b";
+
+    // Check for the number of arguments
+    if(argc <= 1) {
+        return -1;
+    }
+    // Check for the -h flag over here
+    else if(checkStrings(*(argv+1), helpArg) == 0) {
+        printf("-h flag used\n");
+    }
+    // Check for the -c/-d flag over here
+    else if(checkStrings(*(argv+1), compressArg) == 0 || checkStrings(*(argv+1), decompressArg) == 0) {
+        // Check for the -c flag here
+        printf("-c/-d flag usef\n");
+        if(checkStrings(*(argv+1), compressArg) == 0) {
+            printf("-c used here");
+        // Check for the optional -b here
+            if(argc >=2) {
+                if(checkStrings(*(argv+2), blocksizeArg)) {
+                // Check for the block size here
+                printf("optional -b used here");
+                    // check for block size argument here
+                    if(atoi(*(argv+3)) < 1 || atoi(*(argv+3)) > 1024) {
+                        // return error
+                    } else {
+                        // Work with -c and block size
+                    }
+                }
+            }
+        }
+        // Make sure that -b is not used here
+        else {
+            printf("-d used here");
+            if(argc > 2) {
+                if(checkStrings(*(argv+2), blocksizeArg) == 0) {
+                    return -1;
+                }
+            } else {
+                // work with d here
+            }
+        }
+    }
+    // Return failure here
+    else
+        return -1;
+}
+
+/**
+@brief Compares two strings using pointers
+@param string1 The string 1 to be compared
+@param string2 The string 2 to be compared
+@return 0 if strings are equal and -1 if not equal
+*/
+int checkStrings(char* string1, char* string2)
+{
+    while(*string1 == *string2) {
+        if(*string1 == '\0' || *string2 == '\0')
+            break;
+        string1++;
+        string2++;
+    }
+
+    if( *string1 == '\0' && *string2 == '\0' )
+      return 0;
+   else
+      return -1;
 }
