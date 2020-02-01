@@ -77,16 +77,16 @@ SYMBOL *new_rule(int v) {
 
     // Huge error in this function part
 
-    struct symbol *newRule;
+    struct symbol newRule;
 
     // Check if the value is within range
 
-    newRule->value = v;
-    newRule->rule = newRule;
-    newRule->nextr = newRule;
-    newRule->prevr = newRule;
+    newRule.value = v;
+    newRule.rule = &newRule;
+    newRule.nextr = &newRule;
+    newRule.prevr = &newRule;
 
-    return newRule;
+    return &newRule;
 }
 
 /**
