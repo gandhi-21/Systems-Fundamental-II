@@ -17,6 +17,7 @@ int next_nonterminal_value = FIRST_NONTERMINAL;
  * Declare and initialize the struct stack for the recycled symbols
  * get_symbol returns the current head symbol
  * recycle_symbol adds a symbol to the head of the recycled symbols list
+ * add these to custom.h
  */
 struct recycled_symbols {
     int number_symbols;

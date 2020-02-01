@@ -51,17 +51,21 @@
  */
 void init_rules(void) {
     // To be implemented.
+    main_rule = NULL;
+    main_rule->nextr = main_rule;
+    main_rule->prevr = main_rule;
+
+    // clearing the rule map would probably mean that erase the array
+
 }
 
 /**
  * Create a new rule, with a head having a specified value.
  *
  * @param v  The value to be used for the head.  As the head of a rule represents
- * a nonterminal symbol, the specified value must be in the range of values appropriate
- * for such symbols.
- * @return  A pointer to the head of the newly created rule.  The "value" field of the
+ * a nonterminal symbol, the specifieNULLthe newly created rule.  The "value" field of the
  * returned structure is initialized to the specified value.  The "rule" field is
- * initialized to point back to the structure itself.  In addition, then "next" and "prev"
+ * initialized to point back to the structure itself.  In addition, then "nextr" and "prevr"
  * fields are also initialized to point back to the structure itself; representing an
  * empty rule body.
  *
@@ -70,7 +74,17 @@ void init_rules(void) {
  */
 SYMBOL *new_rule(int v) {
     // To be implemented.
-    return NULL;
+
+    struct symbol *newRule;
+
+    // Check if the value is whithin range
+
+    newRule->value = v;
+    newRule->rule = newRule;
+    newRule->nextr = newRule;
+    newRule->prevr = newRule;
+
+    return newRule;
 }
 
 /**
@@ -86,6 +100,16 @@ SYMBOL *new_rule(int v) {
  */
 void add_rule(SYMBOL *rule) {
     // To be implemented.
+
+    if(main_rule==NULL) {
+        main_rule = rule;
+        main_rule->nextr = rule;
+        main_rule->prevr = rule;
+    } else {
+        main_rule->prevr->nextr = rule;
+        main_rule->prevr = rule;
+        rule->nextr = main_rule;
+    }
 }
 
 /**
@@ -101,6 +125,11 @@ void add_rule(SYMBOL *rule) {
  */
 void delete_rule(SYMBOL *rule) {
     // To be implemented.
+    rule->prevr->nextr = rule->nextr;
+    if(rule->refcnt == 0)
+    {
+        // recycle the rule or whatever that means
+    }
 }
 
 /**
@@ -111,7 +140,8 @@ void delete_rule(SYMBOL *rule) {
  */
 SYMBOL *ref_rule(SYMBOL *rule) {
     // To be implemented.
-    return NULL;
+    rule->refcnt += 1;
+    return rule;
 }
 
 /**
@@ -124,4 +154,11 @@ SYMBOL *ref_rule(SYMBOL *rule) {
  */
 void unref_rule(SYMBOL *rule) {
     // To be implemented.
+
+    if(rule->refcnt == 0) {
+        fprintf(stderr, "The ref count is negative for the rule!\n");
+    } else {
+        rule->refcnt -= 1;
+    }
+
 }
