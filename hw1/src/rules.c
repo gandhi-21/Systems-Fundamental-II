@@ -75,9 +75,11 @@ void init_rules(void) {
 SYMBOL *new_rule(int v) {
     // To be implemented.
 
+    // Huge error in this function part
+
     struct symbol *newRule;
 
-    // Check if the value is whithin range
+    // Check if the value is within range
 
     newRule->value = v;
     newRule->rule = newRule;
