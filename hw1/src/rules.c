@@ -86,7 +86,7 @@ SYMBOL *new_rule(int v) {
     newRule.nextr = &newRule;
     newRule.prevr = &newRule;
 
-    return &newRule;
+    return newRule;
 }
 
 /**
