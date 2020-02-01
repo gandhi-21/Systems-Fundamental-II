@@ -14,12 +14,40 @@
 int next_nonterminal_value = FIRST_NONTERMINAL;
 
 /**
+ * Declare and initialize the struct stack for the recycled symbols
+ * get_symbol returns the current head symbol
+ * recycle_symbol adds a symbol to the head of the recycled symbols list
+ */
+struct recycled_symbols {
+    int number_symbols;
+    struct symbol *head;
+};
+
+struct recycled_symbols RECYCLED_SYMBOLS = {0, NULL};
+
+SYMBOL *get_symbol() {
+
+    if(RECYCLED_SYMBOLS.number_symbols == 0) {
+        return NULL;
+    } else {
+        // Move the head from the current to next, decrement the number of symbols and then return the old head
+        RECYCLED_SYMBOLS.number_symbols -= 1;
+        struct symbol *head =  RECYCLED_SYMBOLS.head;
+        RECYCLED_SYMBOLS.head = RECYCLED_SYMBOLS.head->next;
+        return head;
+    }
+}
+
+/**
  * Initialize the symbols module.
  * Frees all symbols, setting num_symbols to 0, and resets next_nonterminal_value
  * to FIRST_NONTERMINAL;
  */
 void init_symbols(void) {
     // To be implemented.
+    num_symbols = 0;
+    next_nonterminal_value = FIRST_NONTERMINAL;
+    return;
 }
 
 /**
@@ -47,6 +75,60 @@ void init_symbols(void) {
  */
 SYMBOL *new_symbol(int value, SYMBOL *rule) {
     // To be implemented.
+
+    if(get_symbol() != NULL) {
+        // recycle a symbol and return it
+
+        struct symbol *newSymbol = get_symbol();    
+        newSymbol->value = value;
+        if(value < FIRST_NONTERMINAL){
+            newSymbol->rule = NULL;
+            newSymbol->refcnt = 0;
+        }
+        else {
+            newSymbol->rule = rule;
+            rule->refcnt += 1;
+            newSymbol->refcnt = 0;
+        }
+        newSymbol->next = 0;
+        newSymbol->prev = 0;
+        newSymbol->nextr = 0;
+        newSymbol->prevr = 0;
+    
+        return newSymbol;
+
+    } else if(num_symbols < MAX_SYMBOLS) {
+        // use main storage to create a new symbol and return it
+        struct symbol* ptr = symbol_storage;
+
+        for(int i=0;i<=num_symbols; i++) {
+            ptr = ptr+1;
+        }
+
+        struct symbol* newSymbol = ptr;
+
+        newSymbol->value = value;
+        if(value < FIRST_NONTERMINAL){
+            newSymbol->rule = NULL;
+            newSymbol->refcnt = 0;
+        }
+        else {
+            newSymbol->rule = rule;
+            rule->refcnt += 1;
+            newSymbol->refcnt = 0;
+        }
+        newSymbol->next = 0;
+        newSymbol->prev = 0;
+        newSymbol->nextr = 0;
+        newSymbol->prevr = 0;
+    
+        return newSymbol;
+
+    } else {
+        // stderr and abort
+        fprintf(stderr, "Symbols Storage exhausted!\n");
+    }
+
     return NULL;
 }
 
@@ -63,4 +145,17 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
  */
 void recycle_symbol(SYMBOL *s) {
     // To be implemented.
+
+    // remove the symbol from the list first
+    s->prev->next = s->next;
+
+    // add the symbol to the list of recycled symbols
+    RECYCLED_SYMBOLS.number_symbols += 1;
+    if(RECYCLED_SYMBOLS.head == NULL) {
+        RECYCLED_SYMBOLS.head = s;
+    } else {
+        s->next = RECYCLED_SYMBOLS.head;
+        RECYCLED_SYMBOLS.head = s;
+    }
+    return;
 }

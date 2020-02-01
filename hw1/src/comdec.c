@@ -144,6 +144,7 @@ int validargs(int argc, char **argv)
 }
 
 /**
+ * Add to the .h file custom
 @brief Compares two strings using pointers
 @param string1 The string 1 to be compared
 @param string2 The string 2 to be compared
