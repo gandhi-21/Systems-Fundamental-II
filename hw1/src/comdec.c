@@ -73,6 +73,29 @@ int decompress(FILE *in, FILE *out) {
     return EOF;
 }
 
+
+/**
+ * Add to the .h file custom
+@brief Compares two strings using pointers
+@param string1 The string 1 to be compared
+@param string2 The string 2 to be compared
+@return 0 if strings are equal and -1 if not equal
+*/
+int checkStrings(char* string1, char* string2)
+{
+    while(*string1 == *string2) {
+        if(*string1 == '\0' || *string2 == '\0')
+            break;
+        string1++;
+        string2++;
+    }
+
+    if( *string1 == '\0' && *string2 == '\0' )
+      return 0;
+   else
+      return -1;
+}
+
 /**
  * @brief Validates command line arguments passed to the program.
  * @details This function will validate all the arguments passed to the
@@ -145,24 +168,3 @@ int validargs(int argc, char **argv)
     return -1;
 }
 
-/**
- * Add to the .h file custom
-@brief Compares two strings using pointers
-@param string1 The string 1 to be compared
-@param string2 The string 2 to be compared
-@return 0 if strings are equal and -1 if not equal
-*/
-int checkStrings(char* string1, char* string2)
-{
-    while(*string1 == *string2) {
-        if(*string1 == '\0' || *string2 == '\0')
-            break;
-        string1++;
-        string2++;
-    }
-
-    if( *string1 == '\0' && *string2 == '\0' )
-      return 0;
-   else
-      return -1;
-}
