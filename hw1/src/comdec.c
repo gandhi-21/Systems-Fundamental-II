@@ -140,7 +140,8 @@ int validargs(int argc, char **argv)
     }
     // Return failure here
     else
-        return -1;
+        {return -1;}
+        
 }
 
 /**
