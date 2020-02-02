@@ -78,6 +78,8 @@ int decompress(FILE *in, FILE *out) {
         if(feof(in))
             break;
 
+        printf("%c", c);
+
     } while(1);
 
     return EOF;
@@ -125,7 +127,6 @@ int checkStrings(char* string1, char* string2)
 int validargs(int argc, char **argv)
 {
     // To be implemented.
-
     char* helpArg = "-h";
     char* compressArg = "-c";
     char* decompressArg = "-d";
@@ -177,16 +178,9 @@ int validargs(int argc, char **argv)
         // Make sure that -b is not used here
         else {
             // printf("-d used here");
-            if(argc > 2) {
-                if(checkStrings(*(argv+2), blocksizeArg) == 0) {
-                    return -1;
-                }
-            } else {
                 // work with d here
-                global_options |= (1 << 2);
-
+                global_options = ((1 << 2) | global_options);
                 return 0;
-            }
         }
     }
     // Return failure here

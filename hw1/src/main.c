@@ -25,6 +25,17 @@ int main(int argc, char **argv)
     if(global_options & 1)
         USAGE(*argv, EXIT_SUCCESS);
 
+    if(global_options & (1 << (3 - 1))) {
+        FILE *in;
+        FILE *out;
+        in = stdin;
+        out = stdout;
+        decompress(in, out);
+        fclose(in);
+        fclose(out);
+    }
+
+
     return EXIT_SUCCESS;
 }
 
