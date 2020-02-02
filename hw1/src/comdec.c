@@ -140,7 +140,7 @@ int validargs(int argc, char **argv)
         
         // Make the least significant bit 1
 
-        global_options = global_options & 0xFE | 1;
+        global_options |= (1 << 0); 
 
         return 0;
     }
