@@ -72,14 +72,10 @@ int decompress(FILE *in, FILE *out) {
     // To be implemented.
 
     do {
-
-        char c = fgetc(in);
-
+        unsigned char c = fgetc(in);
         if(feof(in))
             break;
-
-        printf("%c", c);
-
+        printf("%#x ", c);
     } while(1);
 
     return EOF;
