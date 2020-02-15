@@ -58,29 +58,6 @@ int compress(FILE *in, FILE *out, int bsize) {
     return EOF;
 }
 
-/**
- * Main decompression function.
- * Reads a compressed data transmission from an input stream, expands it,
- * and and writes the resulting decompressed data to an output stream.
- * The output stream is flushed once writing is complete.
- *
- * @param in  The stream from which the compressed block is to be read.
- * @param out  The stream to which the uncompressed data is to be written.
- * @return  The number of bytes written, in case of success, otherwise EOF.
- */
-int decompress(FILE *in, FILE *out) {
-    // To be implemented.
-
-    do {
-        unsigned char c = fgetc(in);
-        if(feof(in))
-            break;
-        printf("%#x ", c);
-    } while(1);
-
-    return EOF;
-}
-
 
 /**
  * Add to the .h file custom
@@ -103,6 +80,75 @@ int checkStrings(char* string1, char* string2)
    else
       return -1;
 }
+
+
+/**
+ Get the number of bytes to be read to decode the utf8
+
+*/
+int get_bytes(unsigned int c)
+{
+    if ((c & 0x80) == 0)
+    {
+        return 0;
+    } else if ((c & 0xE0) == 0xC0)
+    {
+        return 1;
+    } else if ((c & 0xF0) == 0xE0)
+    {
+        return 2;
+    } else if ((c & 0xF8) == 0xF0)
+    {
+        return 3;
+    }
+
+    return 0;
+}
+
+
+/**
+ * Main decompression function.
+ * Reads a compressed data transmission from an input stream, expands it,
+ * and and writes the resulting decompressed data to an output stream.
+ * The output stream is flushed once writing is complete.
+ *
+ * @param in  The stream from which the compressed block is to be read.
+ * @param out  The stream to which the uncompressed data is to be written.
+ * @return  The number of bytes written, in case of success, otherwise EOF.
+ */
+int decompress(FILE *in, FILE *out) {
+    
+
+    do {
+        char c = fgetc(in);
+        unsigned int ch = (unsigned int) c & 0xFF;
+        int bytes_required = get_bytes(ch);
+
+        debug("%0x ", c);
+        if(bytes_required == 0){
+            ch = ch;
+        } else if(bytes_required == 1){
+            ch = ch & 0x1F;
+        } else if (bytes_required == 2) {
+            ch = ch & 0xF;
+        } else {
+            ch = ch & 0x7;
+        }
+
+        while(bytes_required > 0)
+        {
+            char c_next = fgetc(in);
+            debug("%0x ", c_next);
+            ch = (ch << 6);
+            ch |= (c_next & 0x3F);
+            bytes_required -= 1;
+        }
+    } while(!feof(in));
+
+
+    return EOF;
+}
+
 
 /**
  * @brief Validates command line arguments passed to the program.

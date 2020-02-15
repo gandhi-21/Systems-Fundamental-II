@@ -26,19 +26,6 @@ struct recycled_symbols {
 
 struct recycled_symbols RECYCLED_SYMBOLS = {0, NULL};
 
-SYMBOL *get_symbol() {
-
-    if(RECYCLED_SYMBOLS.number_symbols == 0) {
-        return NULL;
-    } else {
-        // Move the head from the current to next, decrement the number of symbols and then return the old head
-        RECYCLED_SYMBOLS.number_symbols -= 1;
-        struct symbol *head =  RECYCLED_SYMBOLS.head;
-        RECYCLED_SYMBOLS.head = RECYCLED_SYMBOLS.head->next;
-        return head;
-    }
-}
-
 /**
  * Initialize the symbols module.
  * Frees all symbols, setting num_symbols to 0, and resets next_nonterminal_value
@@ -77,10 +64,13 @@ void init_symbols(void) {
 SYMBOL *new_symbol(int value, SYMBOL *rule) {
     // To be implemented.
 
-    if(get_symbol() != NULL) {
+    if(RECYCLED_SYMBOLS.number_symbols != 0) {
         // recycle a symbol and return it
 
-        struct symbol *newSymbol = get_symbol();    
+        struct symbol *newSymbol = RECYCLED_SYMBOLS.head;
+
+        RECYCLED_SYMBOLS.head = RECYCLED_SYMBOLS.head->next;
+
         newSymbol->value = value;
         if(value < FIRST_NONTERMINAL){
             newSymbol->rule = NULL;
@@ -140,7 +130,7 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
  * once it has been recycled.
  *
  * Symbols being recycled are added to the recycled_symbols list, where they will
- * be made available for re-allocation by a subsequent call to get_symbol.
+ * be made available for re-allocation by a subsequent call to new_symbol.
  * The recycled_symbols list is managed as a LIFO list (i.e. a stack), using the
  * next field of the SYMBOL structure to chain together the entries.
  */
