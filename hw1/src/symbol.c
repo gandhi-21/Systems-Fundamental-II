@@ -33,8 +33,10 @@ struct recycled_symbols RECYCLED_SYMBOLS = {0, NULL};
  */
 void init_symbols(void) {
     // To be implemented.
+ //   debug("started initial symbols");
     num_symbols = 0;
     next_nonterminal_value = FIRST_NONTERMINAL;
+ //   debug("initialized symbols");
     return;
 }
 
@@ -64,10 +66,12 @@ void init_symbols(void) {
 SYMBOL *new_symbol(int value, SYMBOL *rule) {
     // To be implemented.
 
+  //  debug("started new symbol ");
+
     if(RECYCLED_SYMBOLS.number_symbols != 0) {
         // recycle a symbol and return it
-
-        struct symbol *newSymbol = RECYCLED_SYMBOLS.head;
+    //    debug("taking a recycled symbol");
+        SYMBOL *newSymbol = RECYCLED_SYMBOLS.head;
 
         RECYCLED_SYMBOLS.head = RECYCLED_SYMBOLS.head->next;
 
@@ -81,45 +85,54 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
             rule->refcnt += 1;
             newSymbol->refcnt = 0;
         }
-        newSymbol->next = 0;
-        newSymbol->prev = 0;
-        newSymbol->nextr = 0;
-        newSymbol->prevr = 0;
+        newSymbol->next = NULL;
+        newSymbol->prev = NULL;
+        newSymbol->nextr = NULL;
+        newSymbol->prevr = NULL;
     
         return newSymbol;
 
     } else if(num_symbols < MAX_SYMBOLS) {
         // use main storage to create a new symbol and return it
-        struct symbol* ptr = symbol_storage;
-
-        for(int i=0;i<=num_symbols; i++) {
+      //  debug("makeing a new symbol from the symbols storage");
+        SYMBOL *ptr = symbol_storage;
+       // debug("no of symbols already in the symbols %d ", num_symbols);
+        for(int i=0;i<num_symbols; i++) {
             ptr = ptr+1;
         }
-
-        struct symbol* newSymbol = ptr;
-
-        newSymbol->value = value;
+        num_symbols++;
+       // debug("went through the num of symbols using the loop");
+       // debug("created a new symbol pointer");
+        ptr->value = value;
+    //    debug("added the value to the newly created symbol pointer");
         if(value < FIRST_NONTERMINAL){
-            newSymbol->rule = NULL;
-            newSymbol->refcnt = 0;
+      //      debug("adding a non terminal value");
+            ptr->rule = NULL;
+            ptr->refcnt = 0;
+        //    debug("added a non terminal value");
         }
         else {
-            newSymbol->rule = rule;
+          //  debug("adding a terminal value");
+            ptr->rule = rule;
+           // debug("added the value of rule to rule");
+            if(rule != NULL)
             rule->refcnt += 1;
-            newSymbol->refcnt = 0;
+           // debug("added the ref count");
+            ptr->refcnt = 0;
+        //    debug("added a terminal value");
         }
-        newSymbol->next = 0;
-        newSymbol->prev = 0;
-        newSymbol->nextr = 0;
-        newSymbol->prevr = 0;
-    
-        return newSymbol;
-
+        ptr->next = NULL;
+        ptr->prev = NULL;
+        ptr->nextr = NULL;
+        ptr->prevr = NULL;
+        // debug("made a new symbol from the symbol storage and now returning it");
+  //      debug("value of new symbol %d", newSymbol->value);
+        return ptr;
     } else {
         // stderr and abort
         fprintf(stderr, "Symbols Storage exhausted!\n");
+        abort();
     }
-
     return NULL;
 }
 

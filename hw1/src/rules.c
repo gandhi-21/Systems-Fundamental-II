@@ -51,10 +51,11 @@
  */
 void init_rules(void) {
     // To be implemented.
+  //  debug("started init rules");
     main_rule = NULL;
-    main_rule->nextr = main_rule;
-    main_rule->prevr = main_rule;
-
+    // main_rule->nextr = NULL;
+    // main_rule->prevr = NULL;
+   // debug("initialized the rules");
     // clearing the rule map would probably mean that erase the array
 
 }
@@ -74,21 +75,23 @@ void init_rules(void) {
  */
 SYMBOL *new_rule(int v) {
     // To be implemented.
-
+    // debug("value in the new rule %d ", v);
     // Huge error in this function part
-
-    struct symbol newRule;
-
+    //  debug("started new rule");
+    SYMBOL *sys = new_symbol(v, NULL);
+     //debug("recieved a new symbol from new_symbol");
+     // debug("value in the new rule newly created symbol %d ", sys->value);
     // Check if the value is within range
 
-    newRule.value = v;
-    newRule.rule = &newRule;
-    newRule.nextr = &newRule;
-    newRule.prevr = &newRule;
+    sys->rule = sys;
+    sys->nextr = sys;
+    sys->prevr = sys;
+    sys->next = sys;
+    sys->prev = sys;
 
-    struct symbol *ptr = &newRule;
+    // debug("returning new rule pointer");
 
-    return ptr;
+    return sys;
 }
 
 /**
@@ -100,20 +103,28 @@ SYMBOL *new_rule(int v) {
  * In this case, its "nextr" and "prevr" fields are initialized to point
  * back to the rule itself, thereby creating an empty, doubly linked circular
  * list. If main_rule is not-NULL, then the rule is inserted at the end of
- * the list; i.e. between main_rule->prev and main_rule.
+ * the list; i.e. between main_rule->prevr and main_rule.
  */
 void add_rule(SYMBOL *rule) {
     // To be implemented.
 
-    if(main_rule==NULL) {
+    if(main_rule == NULL)
+    {
+       // debug("null main rule here");
         main_rule = rule;
-        main_rule->nextr = rule;
-        main_rule->prevr = rule;
+        main_rule->nextr = main_rule;
+        main_rule->prevr = main_rule;
     } else {
-        main_rule->prevr->nextr = rule;
-        main_rule->prevr = rule;
+        // between main_rule->prevr and main_rule
+        SYMBOL *last = main_rule->prevr;
+    //    debug("non null main rule here");
+    //    debug("value of main_rule->prevr is %d ", last->value);
         rule->nextr = main_rule;
+        main_rule->prevr = rule;
+        rule->prevr = last;
+        last->nextr = rule;
     }
+
 }
 
 /**

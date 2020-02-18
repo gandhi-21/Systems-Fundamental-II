@@ -105,26 +105,18 @@ int get_bytes(unsigned int c)
     return 0;
 }
 
-
 /**
- * Main decompression function.
- * Reads a compressed data transmission from an input stream, expands it,
- * and and writes the resulting decompressed data to an output stream.
- * The output stream is flushed once writing is complete.
- *
- * @param in  The stream from which the compressed block is to be read.
- * @param out  The stream to which the uncompressed data is to be written.
- * @return  The number of bytes written, in case of success, otherwise EOF.
- */
-int decompress(FILE *in, FILE *out) {
-    
+Get the decoded value of the utf8 char in int
+*/
 
-    do {
-        char c = fgetc(in);
+int get_decoded(char c, FILE *in)
+{
         unsigned int ch = (unsigned int) c & 0xFF;
+
+        printf("%x ", ch);
+
         int bytes_required = get_bytes(ch);
 
-        debug("%0x ", c);
         if(bytes_required == 0){
             ch = ch;
         } else if(bytes_required == 1){
@@ -138,14 +130,182 @@ int decompress(FILE *in, FILE *out) {
         while(bytes_required > 0)
         {
             char c_next = fgetc(in);
-            debug("%0x ", c_next);
             ch = (ch << 6);
             ch |= (c_next & 0x3F);
             bytes_required -= 1;
         }
-    } while(!feof(in));
+
+        return ch;
+}
+
+/**
+
+    1.  84 82
+    2.  84 83
+    3.  81 83
+
+*/
+
+int rule_exists = 0;
+
+int check_special(FILE *in,unsigned char prevChar)
+{
+    if (prevChar == 0x84)
+    {
+        unsigned char currChar = fgetc(in);
+        if(currChar == 0x82)
+        {
+            debug("end of transmission");
+            return -1;
+        } else if(currChar == 0x83)
+        {
+            debug("start of new block");
+            init_rules();
+            init_symbols();
+            debug("initialized rules and symbols");
+            return 0;
+        } else{
+            return currChar;
+        }
+    } else if(prevChar == 0x81)
+    {
+        unsigned char currChar = fgetc(in);
+        if(currChar == 0x83)
+        {
+            debug("start of transmission");
+            debug("start of new block");
+            init_rules();
+            init_symbols();
+            debug("initialized rules and symbols");
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return -1;
+}
+
+/**
+Function to print a linked list
+*/
+void print_linked()
+{
+//     SYMBOL *temp = main_rule;
+//  // debug("Entered the end of a rule");
+//     while(temp != NULL)
+//     {
+//         debug("%d ", temp->value);
+//         temp = temp->next;
+//     }
+//     return;
+}
+
+void print_rule(SYMBOL *curr_rule)
+{
+    SYMBOL *temp = curr_rule;
+    debug("current rule");
+    debug("current rule start value: %d ", curr_rule->value);
+    while(temp->next != curr_rule)
+    {debug("value %d ", temp->value);
+    temp = temp->next;}
+}
 
 
+/**
+ function to add a symbol to a rule body
+*/
+void add_symbol_rule(SYMBOL *rule, SYMBOL *symbol)
+{
+    //debug("adding the symbol to the rule body"); 
+    //debug("value at current rule %d ",  rule->value);
+    //debug("value at current last %d ", rule->prev->value);
+    SYMBOL *last = rule->prev;
+    rule->prev = symbol;
+    symbol->next = rule;
+    symbol->prev = last;
+    last->next = symbol;
+    // debug("value of rule head %d ", temp->value);
+    //debug("added symbol to current rule");
+    return;
+}
+
+
+/**
+ * Main decompression function.
+ * Reads a compressed data transmission from an input stream, expands it,
+ * and and writes the resulting decompressed data to an output stream.
+ * The output stream is flushed once writing is complete.
+ *
+ * @param in  The stream from which the compressed block is to be read.
+ * @param out  The stream to which the uncompressed data is to be written.
+ * @return  The number of bytes written, in case of success, otherwise EOF.
+ */
+int decompress(FILE *in, FILE *out) {
+    
+    int in_decompress = 0;
+    int in_block = 0;
+    int no_block = 0; 
+    SYMBOL *curr_rule = NULL;
+    int no_rules = 0;
+    while(!feof(in))
+    {
+        unsigned char ch = fgetc(in);
+        in_block = check_special(in, ch);
+        while(in_block == 0)
+        {
+            unsigned char nextChar = fgetc(in);
+            if(nextChar == 0x84)
+                {
+                    in_block = check_special(in, nextChar);
+                }
+            if(nextChar == 0x85)
+            {
+                // Only create a new rule over here
+              //   debug("end of a rule");
+                //debug("curr rule value %d ", curr_rule->value);
+                print_rule(curr_rule);
+                add_rule(curr_rule);
+                debug("added curr rule to main rule");
+                curr_rule = NULL;
+               // print_linked();
+               nextChar = fgetc(in);
+            }
+            int decoded_char = get_decoded(nextChar, in);
+            //  Make the linked list over here
+            //  debug("started new rule returning a new symbol");
+            //  debug("decoded char is %d ", decoded_char);
+            if(curr_rule == NULL)
+            {
+               // debug("making a new rule here");
+            //    debug("CURR_RULE FUCK OFF");
+                curr_rule = new_rule(decoded_char);
+                // debug("curr rule -> prev ->value %d ", curr_rule->prev->value);
+                // debug("curr rule -> next ->value %d ", curr_rule->next->value);
+                // next and prev of the rule point to itself
+               // debug("new rule value created %d ", curr_rule->value);
+              // debug("no of rules %d ", no_rules);
+            } else {
+                 //    debug("rule exists %d ", rule_exists);
+                  // debug("making a new symbol here");
+                //debug("newly created rule value I %d ", curr_rule->value);
+                    SYMBOL *new_sym = new_symbol(decoded_char, NULL);
+                  // debug("got a new symbol");
+                //    debug("newly got symbol value %d ", new_sym->value);
+                 //   debug("newly created rule value II %d ", curr_rule->value);
+                    add_symbol_rule(curr_rule, new_sym);
+                }
+            //  debug("ended new rule returning a new symbol");
+            //  debug("started add new rule");
+            //  debug("new_sym -> prevr -> value: %d", new_sym->prevr->value);
+            //  add the symbol to the rule body
+            //  param 1 is new rule, param2 is new symbol
+            //  Create a symbol and add it to the body of the current rule
+            // add_rule(new_sym);
+            // debug("ended add new rule ");
+        }
+        
+    }
+    // debug("no of block: %d", no_block);
     return EOF;
 }
 
