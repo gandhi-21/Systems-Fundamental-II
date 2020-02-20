@@ -14,6 +14,11 @@
  */
 void init_digram_hash(void) {
     // To be implemented.
+    for(int i=0;i<MAX_DIGRAMS;i++)
+    {
+        *(digram_table + i) = 0;
+    }
+
 }
 
 /**
@@ -26,6 +31,28 @@ void init_digram_hash(void) {
  */
 SYMBOL *digram_get(int v1, int v2) {
     // To be implemented.
+
+    int value = DIGRAM_HASH(v1, v2);
+
+    for(int i=value;i<MAX_DIGRAMS;i++)
+    {
+        SYMBOL *daig = *(digram_table + i);
+        if(daig->value == v1 && daig->next->value == v2)
+            return daig;
+        else if(daig == NULL)
+            return NULL;
+    }
+
+    // Did not find it till the end
+    for(int i=0;i<value;i++)
+    {
+        SYMBOL *daig = *(digram_table + i);
+        if(daig->value == v1 && daig->next->value == v2)
+            return daig;
+        else if(daig == NULL)
+            return NULL;
+    }
+
     return NULL;
 }
 
@@ -51,6 +78,16 @@ SYMBOL *digram_get(int v1, int v2) {
  */
 int digram_delete(SYMBOL *digram) {
     // To be implemented.
+
+    SYMBOL *diag = digram_get(digram->value, digram->next->value);
+
+    if (diag == NULL)
+        return -1;
+    else {
+        diag = TOMBSTONE;
+        diag->next = TOMBSTONE;
+        return 0;
+    }
     return -1;
 }
 
@@ -65,5 +102,38 @@ int digram_delete(SYMBOL *digram) {
  */
 int digram_put(SYMBOL *digram) {
     // To be implemented.
+
+    // Check if the diagram is well formed
+
+    int v1 = digram->value;
+    int v2 = digram->next->value;
+
+    int value = DIGRAM_HASH(v1, v2);
+
+    for(int i=value;i<MAX_DIGRAMS;i++)
+    {
+        SYMBOL *diag = *(digram_table + i);
+        if(diag->value == v1 && diag->next->value == v2)
+            return 1;
+        else if(diag == NULL)
+            {
+                diag = digram;
+                return 0;
+            }
+    }
+
+    // Did not find it till the end
+    for(int i=0;i<value;i++)
+    {
+        SYMBOL *diag = *(digram_table + i);
+        if(diag->value == v1 && diag->next->value == v2)
+            return 1;
+        else if(diag == NULL)
+            {
+                diag = digram;
+                return 0;
+            }
+    }
+
     return -1;
 }

@@ -56,7 +56,10 @@ void init_rules(void) {
     // main_rule->nextr = NULL;
     // main_rule->prevr = NULL;
    // debug("initialized the rules");
-    // clearing the rule map would probably mean that erase the array
+      for (int i = 0; i < MAX_SYMBOLS; i++)
+    {
+        *(rule_map + i) = NULL;
+    }
 
 }
 
@@ -117,8 +120,8 @@ void add_rule(SYMBOL *rule) {
     } else {
         // between main_rule->prevr and main_rule
         SYMBOL *last = main_rule->prevr;
-    //    debug("non null main rule here");
-    //    debug("value of main_rule->prevr is %d ", last->value);
+        //debug("non null main rule here");
+       // debug("value of main_rule->prevr is %d ", last->value);
         rule->nextr = main_rule;
         main_rule->prevr = rule;
         rule->prevr = last;
@@ -140,7 +143,6 @@ void add_rule(SYMBOL *rule) {
  */
 void delete_rule(SYMBOL *rule) {
     // To be implemented.
-    rule->prevr->nextr = rule->nextr;
     if(rule->refcnt == 0)
     {
         // recycle the rule or whatever that means

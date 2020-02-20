@@ -95,11 +95,8 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
     } else if(num_symbols < MAX_SYMBOLS) {
         // use main storage to create a new symbol and return it
       //  debug("makeing a new symbol from the symbols storage");
-        SYMBOL *ptr = symbol_storage;
+        SYMBOL *ptr = symbol_storage + num_symbols;
        // debug("no of symbols already in the symbols %d ", num_symbols);
-        for(int i=0;i<num_symbols; i++) {
-            ptr = ptr+1;
-        }
         num_symbols++;
        // debug("went through the num of symbols using the loop");
        // debug("created a new symbol pointer");
