@@ -81,7 +81,9 @@ SYMBOL *new_rule(int v) {
     // debug("value in the new rule %d ", v);
     // Huge error in this function part
     //  debug("started new rule");
+ //   debug("in new symbol of new rule");
     SYMBOL *sys = new_symbol(v, NULL);
+ //   debug("returnes a new symbol value");
      //debug("recieved a new symbol from new_symbol");
      // debug("value in the new rule newly created symbol %d ", sys->value);
     // Check if the value is within range
@@ -143,9 +145,15 @@ void add_rule(SYMBOL *rule) {
  */
 void delete_rule(SYMBOL *rule) {
     // To be implemented.
+
+    // remove the rule from the main rule list
+    // rule->prevr->nextr = rule->nextr;
+    // rule->nextr->prevr = rule->prevr;
+
     if(rule->refcnt == 0)
     {
         // recycle the rule or whatever that means
+        recycle_symbol(rule);
     }
 }
 
@@ -174,6 +182,7 @@ void unref_rule(SYMBOL *rule) {
 
     if(rule->refcnt == 0) {
         fprintf(stderr, "The ref count is negative for the rule!\n");
+        abort();
     } else {
         rule->refcnt -= 1;
     }

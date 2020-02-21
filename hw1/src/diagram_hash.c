@@ -16,7 +16,7 @@ void init_digram_hash(void) {
     // To be implemented.
     for(int i=0;i<MAX_DIGRAMS;i++)
     {
-        *(digram_table + i) = 0;
+        *(digram_table + i) = NULL;
     }
 
 }
@@ -32,25 +32,51 @@ void init_digram_hash(void) {
 SYMBOL *digram_get(int v1, int v2) {
     // To be implemented.
 
+   // debug("get dig value");
     int value = DIGRAM_HASH(v1, v2);
+   // debug("got diag value %d ", value);
 
     for(int i=value;i<MAX_DIGRAMS;i++)
     {
         SYMBOL *daig = *(digram_table + i);
-        if(daig->value == v1 && daig->next->value == v2)
-            return daig;
-        else if(daig == NULL)
+     // debug("found index in digram table values %d and %d ", daig->value, daig->next->value);
+
+        if(*(digram_table + i) == TOMBSTONE)
+            continue;
+
+        if(*(digram_table + i) == NULL)
+        {
+        //    debug("daig is null");
             return NULL;
-    }
+        }
+
+        if((*digram_table + i) != TOMBSTONE)
+            {
+                    if(daig->value == v1 && daig->next->value == v2)
+                { 
+               //     debug("found diag value %d", i);
+                    return *(digram_table + i);
+                    }
+            }
+    } 
 
     // Did not find it till the end
     for(int i=0;i<value;i++)
     {
         SYMBOL *daig = *(digram_table + i);
+
+        if(*(digram_table + i) == TOMBSTONE)
+            continue;
+
+
+        if(daig == NULL)
+            {
+           //     debug("diag is null from 0");
+                return NULL;}
         if(daig->value == v1 && daig->next->value == v2)
-            return daig;
-        else if(daig == NULL)
-            return NULL;
+            {
+           //     debug("found diag value %d", i);
+                return *(digram_table + i);}
     }
 
     return NULL;
@@ -79,14 +105,42 @@ SYMBOL *digram_get(int v1, int v2) {
 int digram_delete(SYMBOL *digram) {
     // To be implemented.
 
-    SYMBOL *diag = digram_get(digram->value, digram->next->value);
+   // debug("getting digram");
 
-    if (diag == NULL)
-        return -1;
-    else {
-        diag = TOMBSTONE;
-        diag->next = TOMBSTONE;
-        return 0;
+    debug("delete digram %d %d ", digram->value, digram->next->value);
+
+    int value = DIGRAM_HASH(digram->value, digram->next->value);
+    
+    for(int i=value;i<MAX_DIGRAMS;i++)
+    {
+     //   SYMBOL *daig = *(digram_table + i);
+
+        if(*(digram_table + i) == NULL)
+            {
+                debug("entry not found");
+                return -1;}
+        else if(*(digram_table + i) == digram)
+        {
+            debug("delete digram at %d ", i);
+            *(digram_table + i) = TOMBSTONE;
+            return 0;
+        }
+    }
+
+    for(int i=0;i<value;i++)
+    {
+    //    SYMBOL *daig = *(digram_table + 1);
+
+        if(*(digram_table + i) == NULL)
+            {
+                debug("entry not found");
+                return -1;}
+        else if(*(digram_table + i) == digram)
+        {
+            debug("delete digram at %d ", i);
+            *(digram_table + i) = TOMBSTONE;
+            return 0;
+        }
     }
     return -1;
 }
@@ -108,16 +162,28 @@ int digram_put(SYMBOL *digram) {
     int v1 = digram->value;
     int v2 = digram->next->value;
 
+    debug("add digram %d %d ", v1, v2);
+
     int value = DIGRAM_HASH(v1, v2);
 
     for(int i=value;i<MAX_DIGRAMS;i++)
     {
-        SYMBOL *diag = *(digram_table + i);
-        if(diag->value == v1 && diag->next->value == v2)
-            return 1;
-        else if(diag == NULL)
+      //  SYMBOL *diag = *(digram_table + i);
+
+     //   debug("sending to digram get %i", i);
+        if((*(digram_table + 1)) == digram)
             {
-                diag = digram;
+                debug("diag found at index %d ", i);
+                return 1;
+            }
+
+        if(*(digram_table + i) == NULL || *(digram_table + i) == TOMBSTONE)
+            {
+                debug("doing diag put at index %d", i);
+                *(digram_table + i) = digram;
+                // debug("check diag index value1 %d %d", diag->value, diag->next->value);
+                // debug("check diag index value2 %d %d", digram->value, digram->next->value);
+                // debug("check diag index value3 %d %d ", (*(digram_table + i))->value, (*(digram_table + i))->next->value);
                 return 0;
             }
     }
@@ -125,14 +191,16 @@ int digram_put(SYMBOL *digram) {
     // Did not find it till the end
     for(int i=0;i<value;i++)
     {
-        SYMBOL *diag = *(digram_table + i);
-        if(diag->value == v1 && diag->next->value == v2)
+      //  SYMBOL *diag = *(digram_table + i);
+        if(*(digram_table + i) == digram)
             return 1;
-        else if(diag == NULL)
-            {
-                diag = digram;
-                return 0;
-            }
+ 
+        if(*(digram_table + i) == NULL || *(digram_table + i) == TOMBSTONE)
+        {
+            debug("doing diag put");
+            *(digram_table + i) = digram;
+            return 0;
+        }
     }
 
     return -1;

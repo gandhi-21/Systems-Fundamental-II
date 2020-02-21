@@ -19,12 +19,10 @@ int next_nonterminal_value = FIRST_NONTERMINAL;
  * recycle_symbol adds a symbol to the head of the recycled symbols list
  * add these to custom.h
  */
-struct recycled_symbols {
-    int number_symbols;
-    struct symbol *head;
-};
 
-struct recycled_symbols RECYCLED_SYMBOLS = {0, NULL};
+int number_recycled_symbols = 0;
+SYMBOL *recycled_symbol = NULL;
+
 
 /**
  * Initialize the symbols module.
@@ -66,24 +64,41 @@ void init_symbols(void) {
 SYMBOL *new_symbol(int value, SYMBOL *rule) {
     // To be implemented.
 
-  //  debug("started new symbol ");
+    //debug("started new symbol ");
 
-    if(RECYCLED_SYMBOLS.number_symbols != 0) {
+    if(number_recycled_symbols != 0) {
         // recycle a symbol and return it
-    //    debug("taking a recycled symbol");
-        SYMBOL *newSymbol = RECYCLED_SYMBOLS.head;
-
-        RECYCLED_SYMBOLS.head = RECYCLED_SYMBOLS.head->next;
-
+      //  debug("taking a recycled symbol");
+        SYMBOL *newSymbol = recycled_symbol;
+      //  debug("set the new symbol to recycled symbol");
+        if(number_recycled_symbols == 1)
+        {
+      //      debug("set recycled symbol to null");
+            recycled_symbol = NULL;
+        } else {
+       //     debug("more than one recycled symbol");
+            recycled_symbol = recycled_symbol -> next;
+        }
+        number_recycled_symbols--;
+      //  debug("number of recycled symbols %d ", number_recycled_symbols);
         newSymbol->value = value;
+      //  debug("set the value");
+        newSymbol->rule = NULL;
+      //  debug("set the rule");
         if(value < FIRST_NONTERMINAL){
+       //     debug("terminal value");
             newSymbol->rule = NULL;
             newSymbol->refcnt = 0;
         }
         else {
+     //       debug("non teminal value");
             newSymbol->rule = rule;
+      //      debug("set the rule");
+            if(rule!= NULL)
             rule->refcnt += 1;
+        //    debug("set the refcnt of rule");
             newSymbol->refcnt = 0;
+        //    debug("set the refcont of the symbol");
         }
         newSymbol->next = NULL;
         newSymbol->prev = NULL;
@@ -123,7 +138,7 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
         ptr->nextr = NULL;
         ptr->prevr = NULL;
         // debug("made a new symbol from the symbol storage and now returning it");
-  //      debug("value of new symbol %d", newSymbol->value);
+        //debug("value of new symbol %d", newSymbol->value);
         return ptr;
     } else {
         // stderr and abort
@@ -147,16 +162,19 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
 void recycle_symbol(SYMBOL *s) {
     // To be implemented.
 
-    // remove the symbol from the list first
-    s->prev->next = s->next;
-
     // add the symbol to the list of recycled symbols
-    RECYCLED_SYMBOLS.number_symbols += 1;
-    if(RECYCLED_SYMBOLS.head == NULL) {
-        RECYCLED_SYMBOLS.head = s;
+   
+   number_recycled_symbols++;
+
+    if(number_recycled_symbols == 0)
+    {
+        recycled_symbol = s;
     } else {
-        s->next = RECYCLED_SYMBOLS.head;
-        RECYCLED_SYMBOLS.head = s;
+        SYMBOL *temp = recycled_symbol;
+        recycled_symbol = s;
+        recycled_symbol->next = temp;
     }
+
+
     return;
 }

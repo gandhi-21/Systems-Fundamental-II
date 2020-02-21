@@ -26,6 +26,7 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
 
     if(global_options & (1 << 2)) {
+       // debug("compressing here");
         FILE *in;
         FILE *out;
         in = stdin;
@@ -34,6 +35,18 @@ int main(int argc, char **argv)
         fclose(in);
         fclose(out);
     }
+
+    if(global_options & (1 << 1)) {
+       // debug("compressing here");
+        FILE *in;
+        FILE *out;
+        in = stdin;
+        out = stdout;
+        compress(in, out, 10);
+        fclose(in);
+        fclose(out);
+    }
+
 }
 
 /*

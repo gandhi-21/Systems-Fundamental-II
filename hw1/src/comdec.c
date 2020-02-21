@@ -32,12 +32,143 @@
  */
 
 /**
+Function to find number of bytes needed to encode
+*/
+int get_bytes_encode(int num)
+{
+    if(num > 0xFFFF)
+    return 3;
+    else if(num > 0x07FF)
+    return 2;
+    else if(num > 0x007F)
+    return 1;
+    else return 0;
+}
+
+void _to_utf8(int num)
+{
+
+    int num_of_bytes = 0;
+    unsigned char first_byte_value = 0;
+
+    if(num > 0x10FFFF)
+    {
+        return;
+    }
+    else if (num > 0xFFFF)
+    {
+        num_of_bytes = 4;
+        first_byte_value = 0xF0;
+    }
+    else if (num > 0x07FF)
+    {
+        num_of_bytes = 3;
+        first_byte_value = 0xE0;
+    }
+    else if (num > 0x007F)
+    {
+        num_of_bytes = 2;
+        first_byte_value = 0xC0;
+    }
+    else
+    {
+        // Doesn't need to converted.
+        printf("%x\n", num);
+        return;
+    }
+
+    first_byte_value |= num >> (num_of_bytes - 1) * 6;
+    printf("%x - ", first_byte_value);
+
+    for(int i = num_of_bytes - 2; i >= 0; i--)
+    {
+        int moved_num = num >> (6 * i);
+        unsigned char byte = 0x80 | (moved_num & 0x3F);
+        printf("%x - ", byte);
+    }
+    printf("\n");
+}
+
+
+/**
  Function to encode a unsigned char to utf8 encoded char
 */
-unsigned char get_encoded(unsigned char ch)
+unsigned char get_encoded(int num, FILE *out)
 {
+    int bytes = get_bytes_encode(num);
+
+    unsigned char first_byte = 0;
+
+    if(bytes == 3)
+        first_byte = 0xF0;
+    else if(bytes == 2)
+        first_byte = 0xE0;
+    else if(bytes == 1)
+        first_byte = 0xC0;
+    else
+        {
+        //    debug("%x ",num);
+            fputc(num, out);}
+
+    first_byte |= num >> (bytes) * 6;
+    fputc(first_byte, out);
+
+    for(int i=bytes - 1; i>=0; i--)
+    {
+        int new_num = num >> (6 * i);
+        unsigned char value = 0x80 | (new_num & 0x3F);
+      //  debug("%x ",value);
+        fputc(value, out);
+    }
     return 0;
 }
+
+
+void process_compression(SYMBOL *rule, FILE *out)
+{
+
+    debug("in process compression");
+
+
+    // SYMBOL *temp = rule;
+    //     //debug("rule mover");
+    //     SYMBOL *rule_mover = temp;
+    //     do{
+    //         debug("%d ", rule_mover->value);
+    //         //debug("symbol mover");
+    //         get_encoded(rule_mover->value, out);
+    //         rule_mover = rule_mover->next;
+    //     }while(rule_mover != temp);
+    //     debug("moving to next rule");
+}
+
+void print_rule(SYMBOL *curr_rule, FILE *out)
+{
+    SYMBOL *temp = curr_rule;
+    debug("printing individual rule");
+    do{
+        _to_utf8(temp->value);
+        temp = temp->next;
+    }while(temp != curr_rule);
+    debug("finished individual rule");
+}
+
+void print_rule_main(FILE *out)
+{
+    SYMBOL *temp = main_rule;
+    debug("main rule");
+    do{
+        // print_rule(temp, out);
+        //_to_utf8(temp->value);
+        debug("%d ", temp->value);
+        temp = temp->next;
+    }while(temp != main_rule);
+    printf("\n");
+ }
+
+
+
+
 
 
 /**
@@ -65,9 +196,12 @@ unsigned char get_encoded(unsigned char ch)
 int compress(FILE *in, FILE *out, int bsize) {
     // To be implemented.
 
-    // int bytes_read = 0;
-    // init_rules();
-    // init_symbols();
+    debug("start compress");
+    int bytes_read = 0;
+    init_rules();
+    init_symbols();
+    init_digram_hash();
+    debug("init rules and symbols");
 
     // // Read in data from the input, segment into bytes 
     // // Use this algorithm to compress the input
@@ -80,32 +214,45 @@ int compress(FILE *in, FILE *out, int bsize) {
     // // }
     // // after every block size is read, put everything to output
     // // 
-    int bytes_read = 0;
 
-    // while(!feof(in))
-    //{
-    //     int byte = fgetc(in);
-    //     bytes_read++;
+    add_rule(new_rule(next_nonterminal_value++));
 
-    //     SYMBOL *byte_symbol = new_symbol((unsigned char)byte, NULL);
-
-    //     // insert_after(main_rule, byte_symbol);
-
-    //     // check_digram(main_rule->prev->prev);
-
-    //     if (bytes_read == bsize)
-    //     {
-    //         bytes_read = 0;
-
-    //         // convert int to utf8
-    //         // output the bytes
-    //         // initialize the rules and symbols again
-
-    //     }
-
-    // }
+    while(!feof(in))
+    {
+        int byte = fgetc(in);
+        bytes_read++;
 
 
+    //    debug("making new byte symbol");
+        SYMBOL *byte_symbol = new_symbol(byte, NULL);
+
+
+     //   debug("calling insert after");
+        insert_after(main_rule->prev, byte_symbol);
+    //    debug("return from insert after");
+
+    //    debug("calling check diagram");
+        check_digram(main_rule->prev->prev);
+
+        // if (bytes_read == bsize)
+        // {
+        //     bytes_read = 0;
+
+        //     debug("bytes_read is bsize");
+        //     // convert int to utf8
+        //     // output the bytes
+        //     // initialize the rules and symbols again
+        //     print_rule(main_rule);
+        //     init_rules();
+        //     init_symbols();
+
+        // }
+
+    }
+
+    // process_compression(main_rule, out);
+    print_rule_main(out);
+    debug("ended compress");
     return EOF;
 }
 
@@ -192,17 +339,7 @@ int get_decoded(char c, FILE *in)
 
 SYMBOL *curr_rule = NULL;
 
-void print_rule(SYMBOL *curr_rule)
-{
-    SYMBOL *temp = curr_rule;
-    // debug("current rule");
-    // debug("current rule start value: %d ", curr_rule->value);
-    while(temp->next != curr_rule)
-    {debug("value %d ", temp->value);
-    temp = temp->next;}
-    debug("value extra %d ", temp->value);
-    debug("\n");
-}
+
 
 
 /**
@@ -302,18 +439,7 @@ int check_special(FILE *in,unsigned char prevChar, FILE *out)
 
 
 
-void print_rule_main()
-{
-    SYMBOL *temp = main_rule;
-    debug("main rule");
-    // debug("main rule last value: %d ", temp->value);
-    while(temp->nextr != main_rule)
-    {
-    debug("head of the rule %d ", temp->value);
-    temp = temp->nextr;}
-    //print_rule(temp);
-    debug("end of main rule");
- }
+
 
 
 /**
@@ -329,6 +455,11 @@ void add_symbol_rule(SYMBOL *rule, SYMBOL *symbol)
     symbol->next = rule;
     symbol->prev = last;
     last->next = symbol;
+    //
+    //  if symbol in rule map
+    // then reference symbol->rule to that
+    //  else create a rule symbol and 
+    //
     // debug("value of rule head %d ", temp->value);
     //debug("added symbol to current rule");
     return;
@@ -474,15 +605,18 @@ int validargs(int argc, char **argv)
     char* decompressArg = "-d";
     char* blocksizeArg = "-b";
 
+   // debug("valid args");
+
     // Check for the number of arguments
     if(argc <= 1) {
+         //   debug("valid args 1");
         return -1;
     }
     // Check for the -h flag over here
     else if(checkStrings(*(argv+1), helpArg) == 0) {
         
         // Make the least significant bit 1
-
+       //     debug("valid args 2");
         global_options |= (1 << 0); 
 
         return 0;
@@ -491,26 +625,38 @@ int validargs(int argc, char **argv)
     else if(checkStrings(*(argv+1), compressArg) == 0 || checkStrings(*(argv+1), decompressArg) == 0) {
         // Check for the -c flag here
         //printf("-c/-d flag usef\n");
+         //   debug("valid args 3");
         if(checkStrings(*(argv+1), compressArg) == 0) {
+              //  debug("valid args 4");
           //  printf("-c used here");
         // Check for the optional -b here
-            if(argc >=2) {
+            if(argc > 2) {
+                 //   debug("valid args 5");
                 if(checkStrings(*(argv+2), blocksizeArg)) {
                 // Check for the block size here
                  // printf("optional -b used here");
+                 ///    debug("valid args 6");
                     // check for block size argument here
                     if(atoi(*(argv+3)) < 1 || atoi(*(argv+3)) > 1024) {
+                        //    debug("valid args 7");
                         // return error
                     } else {
                         // Work with -c and block size
-
-                        global_options |= (1 << 1);
+                        //    debug("valid args 8");
+                     //   debug("compressing here");
+                        global_options = ((1 << 1) | global_options);
 
                         return 0;
 
                     }
+                } else {
+                      //  debug("valid args 11");
+                        global_options = ((1 << 1) | global_options);
+
+                        return 0;
                 }
             } else {
+                 //   debug("valid args 9");
                 // check if there are no more argmemts
                 global_options |= (1 << 1);
 
@@ -521,6 +667,7 @@ int validargs(int argc, char **argv)
         else {
             // printf("-d used here");
                 // work with d here
+                //    debug("valid args 10");
                 global_options = ((1 << 2) | global_options);
                 return 0;
         }
