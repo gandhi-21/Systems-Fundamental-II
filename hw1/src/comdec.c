@@ -166,6 +166,8 @@ void process_compression(FILE *out, int last_block)
 int compress(FILE *in, FILE *out, int bsize) {
     // To be implemented.
 
+    debug("bsize is %d ", bsize);
+
     bsize = bsize * 1024;
 
     debug("start compress");
@@ -445,24 +447,22 @@ int checkStrings(char* string1, char* string2)
 int convert_string_int(char *string1)
 {
     
-    
+    debug("converting int ");
     // if(*(string1) == '-')
     // return -1;
-    int offset;
-
-    if(*(string1) == -1)
-    offset = 1;
-    else offset = 0;
-
     int n = 0;
-    
-    for (int c = 0; *(string1 + c) != '\0'; string1++) {
-        n = n * 10 + *(string1 + c) - '0';
-        debug("n si %d ", n);
+
+    while(*string1 != '\0')
+    {
+        char c = *(string1) - 48;
+        debug("value %d ", c);
+        if(c > 9 || c < 0)
+        return -1;
+        n = (n*10 + c);
+        string1 = string1 + 1;
     }
 
-    if(offset == 1)
-    return -1;
+    debug("bsize is %d ", n);
 
     return n;
 
@@ -507,6 +507,7 @@ int validargs(int argc, char **argv)
     {
         debug("sending back to help");
         // set global options for help and return
+        global_options = 0x1;
         return 0;
     }
 
@@ -524,7 +525,7 @@ int validargs(int argc, char **argv)
                 {
                         debug("in valid args 3 bsize");
                     // check the blocksize
-                    int block = convert_string_int(*(argv + 2));
+                    int block = convert_string_int(*(argv + 3));
                     debug("block size is %d ", block);
                     if(block == -1 || block > 1024)
                     {
