@@ -183,7 +183,7 @@ void process_compression(FILE *out, int last_block)
 int compress(FILE *in, FILE *out, int bsize) {
     // To be implemented.
 
-    bsize = bsize * 1024;
+    bsize = bsize;
 
     debug("start compress");
     int bytes_read = 0;
@@ -357,6 +357,59 @@ void add_symbol_rule(SYMBOL *rule, SYMBOL *symbol)
 }
 
 
+unsigned char curr = 0;
+unsigned char prev = 0;
+int end_rule = 0;
+SYMBOL *curr_rule = NULL;
+
+int check_special(unsigned char curr, FILE *out)
+{
+
+    if(curr == 0x81 || curr == 0x84)
+    {
+        return -1;
+    }
+
+    if(curr == 0x83 && prev == 0x81)
+    {
+        // start of a transmission
+        debug("start of transmission");
+        init_rules();
+        init_symbols();
+        curr_rule = NULL;
+        return -1;
+    } else if(curr == 0x83 && prev == 0x84)
+    {
+        // start of a block
+        debug("end/start of a block");
+        int value = curr_rule->value;
+        *(rule_map + value) = curr_rule;
+        process_decompression_new(main_rule, out);
+        fflush(out);
+        init_rules();
+        init_symbols();
+        curr_rule = NULL;
+        return -1;
+    } else if(curr == 0x82 && prev == 0x84)
+    {
+        // end of transmission
+        debug("end of transmission");
+        int value = curr_rule->value;
+        *(rule_map + value) = curr_rule;
+        process_decompression_new(main_rule, out);
+        fflush(out);
+        return EOF;
+    } else if(curr == 0x85)
+    {
+        end_rule = 1;
+        return 0;
+    }   else {
+        return 0;
+    }
+
+}
+
+
 
 
 /**
@@ -371,66 +424,32 @@ void add_symbol_rule(SYMBOL *rule, SYMBOL *symbol)
  */
 int decompress(FILE *in, FILE *out) {
   
-
-    unsigned char curr, prev;
-    SYMBOL *curr_rule = NULL;
-    prev = fgetc(in);
-
-     while(!feof(in))
+    while(!feof(in))
     {
-        curr = fgetc(in);
-
-        if(prev == 0x81 && curr == 0x83)
+        curr = fgetc(in);   
+        if(check_special(curr, out) == 0)
         {
-            // start of transmission
-            debug("star of transmission");
-            init_rules();
-            init_symbols();
-            curr_rule = NULL;
-        } else if(prev == 0x85 && curr == 0x83)
-        {
-            // start and end of the block
-            debug("start/end of a block");
-            if(curr_rule != NULL)
+            
+            if(end_rule == 1)
             {
+                // end of a rule
                 int value = curr_rule->value;
                 *(rule_map + value) = curr_rule;
                 add_rule(curr_rule);
                 curr_rule = NULL;
+                end_rule = 0;
+            } else {
+                // in block
+                int decoded_value = get_decoded(curr, in);
+                if(curr_rule == NULL)
+                    curr_rule = new_rule(decoded_value);
+                else {
+                    SYMBOL *new_sym = new_symbol(decoded_value, NULL);
+                    add_symbol_rule(curr_rule, new_sym);
+                }
             }
-
-            process_decompression_new(main_rule, out);
-            fflush(out);
-            init_rules();
-            init_symbols();
-            curr_rule = NULL;
-        } else if(prev == 0x84 && curr == 0x82)
-        {
-            // end of transmission
-            debug("end of transmission");
-            int value = curr_rule->value;
-            *(rule_map + value) = curr_rule;
-            add_rule(curr_rule);
-            curr_rule = NULL;
-         //   print_rule_main();
-            process_decompression_new(main_rule, out);
-            fflush(out);
-            return EOF;
-        } else {
-            // normal in block
-            debug("in normal block");
-            int curr_decoded = get_decoded(curr, in);
-            if(curr_rule == NULL)
-            {
-                curr_rule = new_rule(curr_decoded);
-            }  else {
-                SYMBOL *new_sym = new_symbol(curr_decoded, NULL);
-                add_symbol_rule(curr_rule, new_sym);
-            }
-        }
-
+        } 
         prev = curr;
-
     }
    
     return EOF;
