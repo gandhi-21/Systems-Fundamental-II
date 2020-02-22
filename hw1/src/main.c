@@ -25,27 +25,32 @@ int main(int argc, char **argv)
     if(global_options & 1)
         USAGE(*argv, EXIT_SUCCESS);
 
+    int bytes = 0;
+
     if(global_options & (1 << 2)) {
-       // debug("compressing here");
+       // debug("decompressing here");
         FILE *in;
         FILE *out;
         in = stdin;
         out = stdout;
-        decompress(in, out);
-        fclose(in);
-        fclose(out);
+        bytes = decompress(in, out);
     }
 
     if(global_options & (1 << 1)) {
-       // debug("compressing here");
+        debug("compressing here");
         FILE *in;
         FILE *out;
         in = stdin;
         out = stdout;
-        compress(in, out, 10);
-        fclose(in);
-        fclose(out);
+        bytes = compress(in, out, (global_options >> 16));
     }
+
+    if (bytes != EOF)
+        {
+            return EXIT_SUCCESS;
+        } else {
+            return EXIT_FAILURE;
+        }
 
 }
 
