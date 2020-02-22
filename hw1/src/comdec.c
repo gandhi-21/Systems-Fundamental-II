@@ -31,6 +31,8 @@
  * YOU WILL GET A ZERO!
  */
 
+int bytes_compresses = 0;
+
 /**
 Function to find number of bytes needed to encode
 */
@@ -73,10 +75,12 @@ void get_encoded(int num, FILE *out)
         {
         //    debug("%x ",num);
             fputc(num, out);
+            bytes_compresses++;
             return;}
 
     first_byte |= num >> (bytes - 1) * 6;
     fputc(first_byte, out);
+    bytes_compresses++;
 
     for(int i=bytes - 2; i>=0; i--)
     {
@@ -84,6 +88,7 @@ void get_encoded(int num, FILE *out)
         unsigned char value = 0x80 | (new_num & 0x3F);
       //  debug("%x ",value);
         fputc(value, out);
+        bytes_compresses++;
     }
     return ;
 }
@@ -100,7 +105,7 @@ void process_compression(FILE *out, int last_block)
     SYMBOL *temp = main_rule;
     int stopRule = 1;
     fputc(0x83, out);    
-
+    bytes_compresses++;
     do{
 
         SYMBOL *rule = temp;
@@ -122,40 +127,18 @@ void process_compression(FILE *out, int last_block)
         } else
            {
                 debug("putting a rule delimiter");
-                fputc(0x85, out);}
+                fputc(0x85, out);
+                bytes_compresses++;}
 
     }while(temp != main_rule);
 
     block_count++;
     fputc(0x84, out);
+    bytes_compresses++;
     debug("bytes read %d ", count);
 
 }
 
-// void print_rule_main(FILE *out)
-// {
-//     SYMBOL *temp = main_rule;
-//     int stopRule = 1;
-//     while(stopRule == 1){
-        
-//       //  debug("Main Rule: ");
-//      //   debug("[%d]", temp->value);
-//         SYMBOL *temp2 = temp;
-//         int stopRuleBody = 1;
-//         while(stopRuleBody){
-//         //    debug("->%d", temp2->value);
-//            // get_encoded(temp2->value, out);
-//             temp2 = temp2 -> next;
-//             if(temp2 == temp){
-//                 break;
-//             }
-//         }   
-//         temp = temp->nextr;
-//         if(temp == main_rule){
-//             break;
-//         }
-//     }
-//  }
 
 
 /**
@@ -183,7 +166,7 @@ void process_compression(FILE *out, int last_block)
 int compress(FILE *in, FILE *out, int bsize) {
     // To be implemented.
 
-    bsize = bsize;
+    bsize = bsize * 1024;
 
     debug("start compress");
     int bytes_read = 0;
@@ -193,7 +176,7 @@ int compress(FILE *in, FILE *out, int bsize) {
     debug("init rules and symbols");
     add_rule(new_rule(next_nonterminal_value++));
     fputc(0x81, out);
-
+    bytes_compresses++;
     while(!feof(in))
     {
         int byte = fgetc(in);
@@ -223,9 +206,10 @@ int compress(FILE *in, FILE *out, int bsize) {
 
     process_compression(out, 0);
     fputc(0x82, out);
+    bytes_compresses++;
     debug("ended compress");
     debug("blocks encoded %d", block_count);
-    return EOF;
+    return bytes_compresses;
 }
 
 
@@ -288,31 +272,7 @@ int get_decoded(char c, FILE *in)
         return ch;
 }
 
-
-void print_rule_main()
-{
-    SYMBOL *temp = main_rule;
-
-    do{
-
-        SYMBOL *rule = temp;
-
-
-        debug("new rule starts here");
-        debug("rule head %d ", rule->value);
-
-        do {
-
-            debug("symbol in rule %d ", rule->value);
-            rule = rule->next;
-
-        }while(rule != temp);
-
-        temp = temp->nextr;
-
-    }while(temp != main_rule);
-
-}
+int bytes_decompresses = 0;
 
 /**
 Function to process the decompression
@@ -332,6 +292,7 @@ void process_decompression_new(SYMBOL *rule, FILE *out)
         {
             debug("terminal value %d", temp_next->value);
             fputc(temp_next->value, out);
+            bytes_decompresses++;
         } else {
             debug("non terminal value %d", temp_next->value);
             int value = temp_next->value;
@@ -398,7 +359,7 @@ int check_special(unsigned char curr, FILE *out)
         *(rule_map + value) = curr_rule;
         process_decompression_new(main_rule, out);
         fflush(out);
-        return EOF;
+        return bytes_decompresses;
     } else if(curr == 0x85)
     {
         end_rule = 1;
@@ -479,6 +440,36 @@ int checkStrings(char* string1, char* string2)
 
 
 /**
+ Convert string to int
+*/
+int convert_string_int(char *string1)
+{
+    
+    
+    // if(*(string1) == '-')
+    // return -1;
+    int offset;
+
+    if(*(string1) == -1)
+    offset = 1;
+    else offset = 0;
+
+    int n = 0;
+    
+    for (int c = 0; *(string1 + c) != '\0'; string1++) {
+        n = n * 10 + *(string1 + c) - '0';
+        debug("n si %d ", n);
+    }
+
+    if(offset == 1)
+    return -1;
+
+    return n;
+
+}
+
+
+/**
  * @brief Validates command line arguments passed to the program.
  * @details This function will validate all the arguments passed to the
  * program, returning 0 if validation succeeds and -1 if validation fails.
@@ -496,47 +487,75 @@ int checkStrings(char* string1, char* string2)
  */
 int validargs(int argc, char **argv)
 {
-    
+
+
     // To be implemented.
     char* helpArg = "-h";
     char* compressArg = "-c";
     char* decompressArg = "-d";
     char* blocksizeArg = "-b";
 
-    // Check for the number of arguments
-    if(argc <= 1) {
+    debug("in valid args");
+
+    if(argc < 2)
+    {
         return -1;
     }
-    // Check for the -h flag over here
-    else if(checkStrings(*(argv+1), helpArg) == 0) {
-        
-        // Make the least significant bit 1
 
-        global_options |= (1 << 0); 
-
+    // check for -h
+    if(checkStrings(*(argv + 1), helpArg) == 0)
+    {
+        debug("sending back to help");
+        // set global options for help and return
         return 0;
     }
-    // Check for the -c/-d flag over here
-    else if(checkStrings(*(argv+1), compressArg) == 0 || checkStrings(*(argv+1), decompressArg) == 0) {
-        // Check for the -c flag here
-        //printf("-c/-d flag usef\n");
-        if(checkStrings(*(argv+1), compressArg) == 0) {
-            debug("-c used here");
-                global_options |= (1 << 1);
+
+
+    // check for -c
+    if(argc >= 2)
+    {
+        if(checkStrings(*(argv + 1), compressArg) == 0)
+        {
+                debug("in valid args 2 c");
+            if(argc > 2)
+            {
+            // check for -b
+                if(checkStrings(*(argv + 2), blocksizeArg) == 0)
+                {
+                        debug("in valid args 3 bsize");
+                    // check the blocksize
+                    int block = convert_string_int(*(argv + 2));
+                    debug("block size is %d ", block);
+                    if(block == -1 || block > 1024)
+                    {
+                        return -1;
+                    } else {
+                        // set the block size here
+                        debug("got a block sizze here");
+                        global_options = block;
+                        global_options = (global_options << 16) + 2; 
+                        return 0;
+                    }
+
+                } else {
+                    return -1;
+                }
+            } else {
+                global_options = 1024;
+                global_options = (global_options << 16) + 2;
                 return 0;
-            } 
-        // Make sure that -b is not used here
-        else {
-            // printf("-d used here");
-                // work with d here
-                global_options = ((1 << 2) | global_options);
-                return 0;
+            }
+        } else if(checkStrings(*(argv + 1), decompressArg) == 0)
+        {
+
+            global_options = ((1 << 2) | global_options);
+            return 0;
+
+        } else {
+            return -1;
         }
-    }
-    // Return failure here
-    else
-        return -1;
         
+    }
     return -1;
 }
 
