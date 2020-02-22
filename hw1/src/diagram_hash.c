@@ -50,14 +50,12 @@ SYMBOL *digram_get(int v1, int v2) {
             return NULL;
         }
 
-        if((*digram_table + i) != TOMBSTONE)
-            {
-                    if(daig->value == v1 && daig->next->value == v2)
-                { 
-               //     debug("found diag value %d", i);
-                    return *(digram_table + i);
-                    }
-            }
+        if(daig->value == v1 && daig->next->value == v2)
+        { 
+        //     debug("found diag value %d", i);
+            return *(digram_table + i);
+        }
+    
     } 
 
     // Did not find it till the end
@@ -115,15 +113,20 @@ int digram_delete(SYMBOL *digram) {
     {
      //   SYMBOL *daig = *(digram_table + i);
 
+        if(*(digram_table + i) == TOMBSTONE)
+            continue;
+
+
         if(*(digram_table + i) == NULL)
             {
                 debug("entry not found");
                 return -1;}
-        else if(*(digram_table + i) == digram)
+        if(*(digram_table + i) == digram)
         {
-            debug("delete digram at %d ", i);
-            *(digram_table + i) = TOMBSTONE;
-            return 0;
+
+                    debug("delete digram at %d ", i);
+                    *(digram_table + i) = TOMBSTONE;
+                    return 0;
         }
     }
 
@@ -131,15 +134,18 @@ int digram_delete(SYMBOL *digram) {
     {
     //    SYMBOL *daig = *(digram_table + 1);
 
+        if(*(digram_table + i) == TOMBSTONE)
+            continue;
+
         if(*(digram_table + i) == NULL)
             {
                 debug("entry not found");
                 return -1;}
-        else if(*(digram_table + i) == digram)
+        if(*(digram_table + i) == digram)
         {
             debug("delete digram at %d ", i);
             *(digram_table + i) = TOMBSTONE;
-            return 0;
+            return 0;  
         }
     }
     return -1;
@@ -155,7 +161,7 @@ int digram_delete(SYMBOL *digram) {
  * table being full or the given digram not being well-formed.
  */
 int digram_put(SYMBOL *digram) {
-    // To be implemented.
+     // To be implemented.
 
     // Check if the diagram is well formed
 

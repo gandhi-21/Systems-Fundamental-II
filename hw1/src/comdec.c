@@ -147,7 +147,7 @@ void print_rule(SYMBOL *curr_rule, FILE *out)
     SYMBOL *temp = curr_rule;
     debug("printing individual rule");
     do{
-        _to_utf8(temp->value);
+        get_encoded(temp->value, out);
         temp = temp->next;
     }while(temp != curr_rule);
     debug("finished individual rule");
@@ -156,19 +156,27 @@ void print_rule(SYMBOL *curr_rule, FILE *out)
 void print_rule_main(FILE *out)
 {
     SYMBOL *temp = main_rule;
-    debug("main rule");
-    do{
-        // print_rule(temp, out);
-        //_to_utf8(temp->value);
-        debug("%d ", temp->value);
-        temp = temp->next;
-    }while(temp != main_rule);
-    printf("\n");
+    int stopRule = 1;
+    while(stopRule == 1){
+        
+        debug("Main Rule: ");
+        debug("[%d]", temp->value);
+        SYMBOL *temp2 = temp->next;
+        int stopRuleBody = 1;
+        while(stopRuleBody){
+            debug("->%d", temp2->value);
+            get_encoded(temp2->value, out);
+            temp2 = temp2 -> next;
+            if(temp2 == temp){
+                break;
+            }
+        }   
+        temp = temp->nextr;
+        if(temp == main_rule){
+            break;
+        }
+    }
  }
-
-
-
-
 
 
 /**
@@ -222,6 +230,8 @@ int compress(FILE *in, FILE *out, int bsize) {
         int byte = fgetc(in);
         bytes_read++;
 
+        if(byte == EOF)
+        break;
 
     //    debug("making new byte symbol");
         SYMBOL *byte_symbol = new_symbol(byte, NULL);
@@ -232,7 +242,7 @@ int compress(FILE *in, FILE *out, int bsize) {
     //    debug("return from insert after");
 
     //    debug("calling check diagram");
-        check_digram(main_rule->prev->prev);
+        check_digram(byte_symbol->prev);
 
         // if (bytes_read == bsize)
         // {

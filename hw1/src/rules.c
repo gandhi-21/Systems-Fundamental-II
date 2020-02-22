@@ -147,8 +147,8 @@ void delete_rule(SYMBOL *rule) {
     // To be implemented.
 
     // remove the rule from the main rule list
-    // rule->prevr->nextr = rule->nextr;
-    // rule->nextr->prevr = rule->prevr;
+    rule->prevr->nextr = rule->nextr;
+    rule->nextr->prevr = rule->prevr;
 
     if(rule->refcnt == 0)
     {

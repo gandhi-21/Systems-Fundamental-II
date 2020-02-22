@@ -71,7 +71,8 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
       //  debug("taking a recycled symbol");
         SYMBOL *newSymbol = recycled_symbol;
       //  debug("set the new symbol to recycled symbol");
-        if(number_recycled_symbols == 1)
+      number_recycled_symbols--;
+        if(number_recycled_symbols == 0)
         {
       //      debug("set recycled symbol to null");
             recycled_symbol = NULL;
@@ -79,7 +80,6 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
        //     debug("more than one recycled symbol");
             recycled_symbol = recycled_symbol -> next;
         }
-        number_recycled_symbols--;
       //  debug("number of recycled symbols %d ", number_recycled_symbols);
         newSymbol->value = value;
       //  debug("set the value");
@@ -94,7 +94,7 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
      //       debug("non teminal value");
             newSymbol->rule = rule;
       //      debug("set the rule");
-            if(rule!= NULL)
+            if(rule != NULL)
             rule->refcnt += 1;
         //    debug("set the refcnt of rule");
             newSymbol->refcnt = 0;
@@ -161,7 +161,6 @@ SYMBOL *new_symbol(int value, SYMBOL *rule) {
  */
 void recycle_symbol(SYMBOL *s) {
     // To be implemented.
-
     // add the symbol to the list of recycled symbols
    
    number_recycled_symbols++;
@@ -170,9 +169,8 @@ void recycle_symbol(SYMBOL *s) {
     {
         recycled_symbol = s;
     } else {
-        SYMBOL *temp = recycled_symbol;
+        s->next = recycled_symbol;
         recycled_symbol = s;
-        recycled_symbol->next = temp;
     }
 
 
