@@ -31,20 +31,21 @@ int main(int argc, char **argv)
         FILE *out;
         in = stdin;
         out = stdout;
-        decompress(in, out);
-        fclose(in);
-        fclose(out);
+        int bytes = decompress(in, out);
+        // fclose(in);
+        // fclose(out);
+        return bytes;
     }
 
     if(global_options & (1 << 1)) {
-       // debug("compressing here");
+        debug("compressing here");
         FILE *in;
         FILE *out;
         in = stdin;
         out = stdout;
-        compress(in, out, 10);
-        fclose(in);
-        fclose(out);
+        compress(in, out, 1024);
+        // fclose(in);
+        // fclose(out);
     }
 
 }

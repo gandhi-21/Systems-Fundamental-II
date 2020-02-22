@@ -51,11 +51,7 @@
  */
 void init_rules(void) {
     // To be implemented.
-  //  debug("started init rules");
     main_rule = NULL;
-    // main_rule->nextr = NULL;
-    // main_rule->prevr = NULL;
-   // debug("initialized the rules");
       for (int i = 0; i < MAX_SYMBOLS; i++)
     {
         *(rule_map + i) = NULL;
@@ -78,15 +74,8 @@ void init_rules(void) {
  */
 SYMBOL *new_rule(int v) {
     // To be implemented.
-    // debug("value in the new rule %d ", v);
-    // Huge error in this function part
-    //  debug("started new rule");
- //   debug("in new symbol of new rule");
+
     SYMBOL *sys = new_symbol(v, NULL);
- //   debug("returnes a new symbol value");
-     //debug("recieved a new symbol from new_symbol");
-     // debug("value in the new rule newly created symbol %d ", sys->value);
-    // Check if the value is within range
 
     sys->rule = sys;
     sys->nextr = sys;
@@ -94,7 +83,6 @@ SYMBOL *new_rule(int v) {
     sys->next = sys;
     sys->prev = sys;
 
-    // debug("returning new rule pointer");
 
     return sys;
 }
@@ -115,15 +103,12 @@ void add_rule(SYMBOL *rule) {
 
     if(main_rule == NULL)
     {
-       // debug("null main rule here");
         main_rule = rule;
         main_rule->nextr = main_rule;
         main_rule->prevr = main_rule;
     } else {
-        // between main_rule->prevr and main_rule
         SYMBOL *last = main_rule->prevr;
-        //debug("non null main rule here");
-       // debug("value of main_rule->prevr is %d ", last->value);
+    
         rule->nextr = main_rule;
         main_rule->prevr = rule;
         rule->prevr = last;
@@ -149,6 +134,8 @@ void delete_rule(SYMBOL *rule) {
     // remove the rule from the main rule list
     rule->prevr->nextr = rule->nextr;
     rule->nextr->prevr = rule->prevr;
+
+    
 
     if(rule->refcnt == 0)
     {
