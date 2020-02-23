@@ -548,7 +548,9 @@ int validargs(int argc, char **argv)
             }
         } else if(checkStrings(*(argv + 1), decompressArg) == 0)
         {
-
+            
+            if(argc > 2)
+            return -1;
             global_options = ((1 << 2) | global_options);
             return 0;
 
