@@ -53,6 +53,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef	BSD
 #include <strings.h>
@@ -62,6 +64,7 @@
 
 #include "customize.h"
 #include "hash.h"
+
 
 
 #ifdef	SYS_III
@@ -100,7 +103,7 @@ int		indent = 0,		/* current indent */
 		depth = 9999,		/* max depth */
 		cur_depth = 0,	
 		sum = FALSE,		/* sum the subdirectories */
-		dup = FALSE,		/* use duplicate inodes */
+		dup_new = FALSE,		/* use duplicate inodes */
 		floating = FALSE,	/* floating column widths */
 		sort = FALSE,
 		cnt_inodes = FALSE,	/* count inodes */
@@ -157,10 +160,12 @@ int	indented = FALSE;	/* These had to be global since they */
 int	last_indent = 0;	/* determine what gets displayed during */
 int	last_subdir = FALSE;	/* the visual display */
 
+int	chk_4_dir(char *path);
+void get_data(char *path,int cont);
+int	is_directory(char *path);
 
 
-down(subdir)
-char	*subdir;
+void down(char *subdir)
 {
 OPEN	*dp;			/* stream from a directory */
 OPEN	*opendir ();
@@ -267,16 +272,18 @@ READ		tmp_entry;
 
 
 #ifdef	MEMORY_BASED
-
+	tail = NULL;
+	head = NULL;
 	for (file = readdir(dp); file != NULL; file = readdir(dp)) {
 		if ((!quick && !visual ) ||
  		    ( strcmp(NAME(*file), "..") != SAME &&
 		     strcmp(NAME(*file), ".") != SAME &&
 		     chk_4_dir(NAME(*file)) ) ) {
-			tmp_RD = (struct RD_list *) malloc(sizeof(struct RD_list *));
+			tmp_RD = (struct RD_list *) malloc(sizeof(struct RD_list));
 			memcpy(&tmp_RD->entry, file, sizeof(tmp_entry));
 			tmp_RD->bptr = head;
 			tmp_RD->fptr = NULL;
+			//tail = tmp_RD;
 			if (head == NULL) head = tmp_RD;
 				else tail->fptr = tmp_RD;
 			tail = tmp_RD;
@@ -432,8 +439,7 @@ READ		tmp_entry;
 
 
 
-int	chk_4_dir(path)
-char	*path;
+int	chk_4_dir(char *path)
 {
 	if (is_directory(path)) return TRUE;
 	else return FALSE;
@@ -444,8 +450,7 @@ char	*path;
 
 /* Is the specified path a directory ? */
 
-int	is_directory(path)
-char           *path;
+int	is_directory(char *path)
 {
 
 #ifdef LSTAT
@@ -469,9 +474,7 @@ char           *path;
   * directory, go down into it, and get the data from all files inside. 
   */
 
-get_data(path,cont)
-char           *path;
-int		cont;    
+void get_data(char *path,int cont)    
 {
 /* struct	stat	stb; */
 int		i;
@@ -485,7 +488,7 @@ int		i;
 
 		    /* Don't do it again if we've already done it once. */
 
-		if ( (h_enter(stb.st_dev, stb.st_ino) == OLD) && (!dup) )
+		if ( (h_enter(stb.st_dev, stb.st_ino) == OLD) && (!dup_new) )
 			return;
 		inodes++;
 		sizes+= K(stb.st_size);
@@ -520,7 +523,7 @@ int	user_file_list_supplied = 0;
 						optarg++;
 					}
 					break;
-			case 'd':	dup = TRUE;
+			case 'd':	dup_new = TRUE;
 					break;	
 			case 'i':	cnt_inodes = TRUE;
 					break;
@@ -530,7 +533,7 @@ int	user_file_list_supplied = 0;
 			case 't':	sw_summary = TRUE;
 					break;
 			case 'q':	quick = TRUE;
-					dup = FALSE;
+					dup_new = FALSE;
 					sum = FALSE;
 					cnt_inodes = FALSE;
 					break;
@@ -568,7 +571,7 @@ int	user_file_list_supplied = 0;
 
 		if (version>1) {
 			printf("Tree height:	%d\n",depth);
-			if (dup) printf("Include duplicate inodes\n");
+			if (dup_new) printf("Include duplicate inodes\n");
 			if (cnt_inodes) printf("Count inodes\n");
 			if (sum) printf("Include unseen subdirectories in totals\n");
 			if (sw_summary) printf("Print totals at end\n");

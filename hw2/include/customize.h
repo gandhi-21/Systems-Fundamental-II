@@ -25,7 +25,6 @@
  /* else, edit the next line. */
 
 #	include		<sys/dirent.h>
-
 #	define	OPEN	struct direct
 #	define	READ	struct dirent
 #	define	NAME(x)	((x).d_name)
@@ -36,11 +35,19 @@
 #	define	READ	struct direct
 #	define	NAME(x)	((x).d_name)
 #	define	INO(x)	((x).d_ino)
-
 #	include		"direct.c"
 
 #endif
 
-#if !(defined(BSD) || !defined(SYS_V) || !defined(SYS_III) || !defined(SCO_XENIX))
+#ifdef LINUX
+#   include <dirent.h>
+#   define  OPEN    DIR 
+#   define  READ struct dirent
+#   define  NAME(x) ((x).d_name)
+
+#endif
+
+
+#if !(defined(BSD) || !defined(SYS_V) || !defined(SYS_III) || !defined(SCO_XENIX) || !defined(LINUX))
 "This is an Error"
 #endif
