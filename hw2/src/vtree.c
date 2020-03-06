@@ -48,12 +48,13 @@
 */
 
 #include "patchlevel.h"
-
+#include<debug.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include<getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef	BSD
@@ -126,8 +127,8 @@ char           *Program;		/* our name */
 short           sw_follow_links = 1;	/* follow symbolic links */
 short           sw_summary;		/* print Grand Total line */
 
-int             total_inodes, inodes;	/* inode count */
-long            total_sizes, sizes;	/* block count */
+int             total_inodes=0, inodes=0;	/* inode count */
+long            total_sizes=0, sizes=0;	/* block count */
 
 char            topdir[NAMELEN];	/* our starting directory */
 
@@ -283,7 +284,6 @@ READ		tmp_entry;
 			memcpy(&tmp_RD->entry, file, sizeof(tmp_entry));
 			tmp_RD->bptr = head;
 			tmp_RD->fptr = NULL;
-			//tail = tmp_RD;
 			if (head == NULL) head = tmp_RD;
 				else tail->fptr = tmp_RD;
 			tail = tmp_RD;
@@ -293,10 +293,13 @@ READ		tmp_entry;
 				/* screwy, inefficient, bubble sort	*/
 				/* but it works				*/
 	if (sort) {
+		tmp_RD = head;
 		while (tmp_RD) {
+		//	debug("sorting values here");
 			tmp1_RD = tmp_RD->fptr;
 			while (tmp1_RD) {
-				if (NAME(tmp_RD->entry) > NAME(tmp1_RD->entry)) {
+				if (strcmp(NAME(tmp_RD->entry),NAME(tmp1_RD->entry)) > 0 && ((strcmp(NAME(tmp_RD->entry), "..") != SAME) || (strcmp(NAME(tmp_RD->entry), ".") != SAME) || (strcmp(NAME(tmp1_RD->entry), "..") != SAME) || (strcmp(NAME(tmp1_RD->entry), ".") != SAME)))
+				 {
 					/* swap the two */
 					memcpy(&tmp_entry, &tmp_RD->entry, sizeof(tmp_entry));
 					memcpy(&tmp_RD->entry, &tmp1_RD->entry, sizeof(tmp_entry));
@@ -330,7 +333,10 @@ READ		tmp_entry;
 
 		if (cur_depth<depth) {
 			if (cnt_inodes) printf("   %d",inodes);
-			printf(" : %ld\n",sizes);
+			if(sum == TRUE){
+				printf(" : %ld\n", total_sizes + sizes);
+			} else
+			{printf(" : %ld\n",sizes);}
 			total_sizes += sizes;
 			total_inodes += inodes;
 			sizes = 0;
@@ -403,10 +409,14 @@ READ		tmp_entry;
 #ifdef	MEMORY_BASED
 				/* free the allocated memory */
 	tmp_RD = head;
+	tmp1_RD = NULL;
 	while (tmp_RD) {
+		tmp1_RD = tmp_RD->fptr;
 		free(tmp_RD);
-		tmp_RD = tmp_RD->fptr;
+		tmp_RD = tmp1_RD;
 	}
+	tmp1_RD = NULL;
+
 #endif	
 
 	if (visual && indented) {
@@ -432,8 +442,8 @@ READ		tmp_entry;
 	sub_dirs[cur_depth] = 0;
 	cur_depth--;
 
+	free(dp);
 	chdir(cwd);			/* go back where we were */
-
 
 } /* down */
 
@@ -481,17 +491,25 @@ int		i;
 
 	if (cont) { 
 		if (is_directory(path)) 
-			down(path);
+			{
+				inodes++;
+				sizes+= (stb.st_blocks / 2);
+				down(path);
+}
 	}
 	else {
-		if (is_directory(path)) return;
+		if (is_directory(path)) {
+		//	sizes += (stb.st_blocks / 2);
+			return;}
 
 		    /* Don't do it again if we've already done it once. */
 
 		if ( (h_enter(stb.st_dev, stb.st_ino) == OLD) && (!dup_new) )
-			return;
+			{
+			//	sizes += (stb.st_size);
+				return;}
 		inodes++;
-		sizes+= K(stb.st_size);
+		sizes+= (stb.st_blocks / 2);
 	}
 } /* get_data */
 
@@ -509,9 +527,25 @@ int	user_file_list_supplied = 0;
 
 	Program = *argv;		/* save our name for error messages */
 
+	struct option long_options[] = {
+	{"duplicates", 0, 0, 'd'},
+	{"floating-column-widths", 0, 0, 'f'},
+	{"height", 1, 0, 'h'},
+	{"inodes", 0, 0, 'i'},
+	{"sort-directories", 0, 0, 'o'},
+	{"totals", 0, 0, 't'},
+	{"quick-display", 0, 0, 'q'},
+	{"visual-display", 0, 0, 'v'},
+	{"version", 0, 0, 'V'},
+	{"no-follow-symlinks", 0, 0, 'l'},
+	{0, 0, 0, 0}
+};
+
+	int option_index = 0;
+
     /* Pick up options from command line */
 
-	while ((option = getopt(argc, argv, "dfh:iostqvV")) != EOF) {
+	while ((option = getopt_long(argc, argv, "dfh:ilostqvV", long_options, &option_index)) != EOF) {
 		switch (option) {
 			case 'f':	floating = TRUE; break;
 			case 'h':	depth = atoi(optarg);
@@ -527,7 +561,9 @@ int	user_file_list_supplied = 0;
 					break;	
 			case 'i':	cnt_inodes = TRUE;
 					break;
-			case 'o':	sort = TRUE; break;	
+			#ifdef MEMORY_BASED
+			case 'o':	sort = TRUE; break;
+			#endif	
 			case 's':	sum = TRUE;
 					break;
 			case 't':	sw_summary = TRUE;
@@ -541,14 +577,29 @@ int	user_file_list_supplied = 0;
 					break;
 			case 'V':	version++;
 					break;
+			#ifdef LSTAT
+				case 'l':
+				sw_follow_links = 0;
+				break;
+			#endif
 			default:	err = TRUE;
 		}
 		if (err) {
+			#ifdef LSTAT
+			fprintf(stderr,"%s: [ -d ] [ -h # ] [ -i ] [-l] [ -o ] [ -s ] [ -q ] [ -v ] [ -V ]\n",Program);
+			#else
 			fprintf(stderr,"%s: [ -d ] [ -h # ] [ -i ] [ -o ] [ -s ] [ -q ] [ -v ] [ -V ]\n",Program);
+			#endif
 			fprintf(stderr,"	-d	count duplicate inodes\n");
 			fprintf(stderr,"	-f	floating column widths\n");
 			fprintf(stderr,"	-h #	height of tree to look at\n");
 			fprintf(stderr,"	-i	count inodes\n");
+			#ifdef LSTAT
+			fprintf(stderr,"	-l Symbolic Link Options not selected\n");
+			#endif
+			#ifdef MEMORY_BASED
+			fprintf(stderr, "	-o sort directories before processing");
+			#endif
 			fprintf(stderr,"	-o	sort directories before processing\n");
 			fprintf(stderr,"	-s	include subdirectories not shown due to -h option\n");
 			fprintf(stderr,"	-t	totals at the end\n");
@@ -590,7 +641,7 @@ int	user_file_list_supplied = 0;
 	}
 
 #ifdef BSD
-	getwd(topdir);				/* find out where we are */
+	getcwd(topdir, sizeof (topdir));				/* find out where we are */
 #else
 	getcwd(topdir, sizeof (topdir));	/* find out where we are */
 #endif
@@ -616,13 +667,17 @@ int	user_file_list_supplied = 0;
 
 	if (sw_summary) {
 		printf("\n\nTotal space used: %ld\n",total_sizes);
-		if (cnt_inodes) printf("Total inodes: %d\n",inodes);
+		if (cnt_inodes) printf("Total inodes: %d\n",total_inodes);
 	}
 	
 #ifdef HSTATS
 	fflush(stdout);
 	h_stats();
 #endif
+
+	for(int i=0; i<=position_hash_clear;i++)
+	{free(hash_clears[i]);}
+	position_hash_clear = 0;
 
 	exit(0);
 } /* main */

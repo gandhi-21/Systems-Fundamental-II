@@ -21,4 +21,7 @@ struct htable {
 #define OLD	0		/* inode was in hash already */
 #define NEW	1		/* inode has been added to hash */
 
+extern int position_hash_clear;
+extern void *hash_clears[];
+
 int h_enter(dev_t dev, ino_t ino);

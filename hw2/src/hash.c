@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include "hash.h"
 //#include "customize.h"
-//#include<stdlib.h>
+#include<stdlib.h>
 #include<string.h>
 
 static struct htable *tables[TABLES];
@@ -26,6 +26,8 @@ extern void *malloc();		/* added 6/17/88 */
 extern void *realloc();		/* added 6/17/88 */
 extern void *calloc();		/* added 6/17/88 */
 
+int position_hash_clear = 0;
+void *hash_clears[257*50];
 /* These are for statistical use later on. */
 static int      hs_tables = 0,	/* number of tables allocated */
                 hs_duplicates = 0,	/* number of OLD's returned */
@@ -49,7 +51,6 @@ int h_enter(dev_t dev,ino_t ino)
     register struct hbucket *bucketp;
     register ino_t *keyp;
     int             i;
-
     hs_searches++;		/* stat, total number of calls */
 
     /*
@@ -63,6 +64,7 @@ int h_enter(dev_t dev,ino_t ino)
 	    i++;
 	if (!tables[i]) {
 	    tables[i] = (struct htable *)  malloc(sizeof(struct htable));
+        hash_clears[position_hash_clear++] = tables[i];
 	    if (tables[i] == NULL) {
 		perror("can't malloc hash table");
 		return NEW;
@@ -109,6 +111,7 @@ int h_enter(dev_t dev,ino_t ino)
 		perror("can't malloc hash bucket");
 		return NEW;
 	    };
+        hash_clears[position_hash_clear++] = bucketp->keys;
 	    hs_buckets++;
 	} else {
 	    bucketp->keys = (ino_t *)
@@ -118,6 +121,7 @@ int h_enter(dev_t dev,ino_t ino)
 		perror("can't extend hash bucket");
 		return NEW;
 	    };
+        hash_clears[position_hash_clear++] = bucketp->keys;
 	    hs_extensions++;
 	};
 	bucketp->length += EXTEND;
