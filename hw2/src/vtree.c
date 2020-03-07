@@ -59,6 +59,7 @@
 #include <stdio.h>
 #ifdef	BSD
 #include <strings.h>
+#include <string.h>
 #else
 #include <string.h>
 #endif
@@ -265,7 +266,7 @@ READ		tmp_entry;
 	indent+=3;
 
 #ifdef BSD
-	getwd(cwd);				/* remember where we are */
+	getcwd(cwd, sizeof(cwd));				/* remember where we are */
 #else
 	getcwd(cwd, sizeof(cwd));		/* remember where we are */
 #endif
