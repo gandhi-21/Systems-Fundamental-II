@@ -25,3 +25,4 @@ extern int position_hash_clear;
 extern void *hash_clears[];
 
 int h_enter(dev_t dev, ino_t ino);
+void h_stats();
