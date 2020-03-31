@@ -64,6 +64,7 @@ Test(sf_memsuite_student, malloc_an_int, .init = sf_mem_init, .fini = sf_mem_fin
 }
 
 Test(sf_memsuite_student, malloc_three_pages, .init = sf_mem_init, .fini = sf_mem_fini) {
+	debug("allocating three pages");
 	sf_errno = 0;
 	// We want to allocate up to exactly three pages.
 	void *x = sf_malloc(3 * PAGE_SZ - ((1 << 6) - sizeof(sf_header)) - 64 - 2*sizeof(sf_header));
