@@ -180,6 +180,8 @@ Test(sf_memsuite_student, realloc_smaller_block_splinter, .init = sf_mem_init, .
 	cr_assert(bp->header & THIS_BLOCK_ALLOCATED, "Allocated bit is not set!");
 	cr_assert((bp->header & BLOCK_SIZE_MASK) == 128, "Block size not what was expected!");
 
+	//sf_show_heap();
+
 	// There should be only one free block of size 3840.
 	assert_free_block_count(0, 1);
 	assert_free_block_count(3840, 1);

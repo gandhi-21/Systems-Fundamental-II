@@ -167,7 +167,16 @@ Function to check if wilderness block can be used
 sf_block *checkWildernessBlock(size_t size)
 {
     sf_block *temp = sf_free_list_heads[NUM_FREE_LISTS - 1].body.links.next;
+    // if((size_t)temp == (size_t)&sf_free_list_heads[NUM_FREE_LISTS - 1])
+    // return NULL;
     //debug(" current wilderness at check wilderness %p", temp);
+
+    if(temp == &sf_free_list_heads[9])
+        {
+            debug("no wilderness block present");
+            return NULL;}
+
+
     size_t size_block = (temp->header & BLOCK_SIZE_MASK);
     if(size_block >= size)
     return temp;
@@ -217,11 +226,24 @@ int grow_heap()
     // Convert the epilogue to become the new header of the page
     
     // Coalesce both the new blocks
+      //  wilderness_block = (sf_block *) new_memstart;
         sf_epilogue->header = 4096;
         sf_block * wilderness = sf_free_list_heads[9].body.links.next;
+
+        if(wilderness == &sf_free_list_heads[9])
+        {
+            wilderness = sf_epilogue;
+            wilderness->body.links.next = &sf_free_list_heads[9];
+            wilderness->body.links.prev = &sf_free_list_heads[9];
+            sf_free_list_heads[9].body.links.next = wilderness;
+            sf_free_list_heads[9].body.links.prev = wilderness;
+        } else {
+             wilderness->header +=  4096;
+        }
+
         //debug("current size of wilderness is %lu", wilderness->header);
 //        if(sf_free_list_heads[9].body.links.next != &sf_free_list_heads[9])
-        wilderness->header +=  4096;
+       
         // Write the new epilogue
         sf_epilogue = (sf_block*) (new_memstart + 4080);
         writeEpilogue(sf_epilogue, wilderness);
@@ -234,39 +256,53 @@ Function to use the wilderness block to allocate memory
 */
 sf_block *allocateWilderness(size_t sizeRequested)
 {
-    sf_block *wilderness = wilderness_block;
+    //sf_block *wilderness = wilderness_block;
     //debug("current wilderness %p", wilderness);
-    void *new_wilderness_ptr = wilderness;
-    new_wilderness_ptr += (sizeRequested);
 
-    sf_block *new_wilderness = (sf_block *) new_wilderness_ptr;
+    sf_block *wilderness = sf_free_list_heads[9].body.links.next;
 
-    new_wilderness->prev_footer = sizeRequested + 1;
-    new_wilderness->header = wilderness->header - sizeRequested;
+    if(((wilderness->header & BLOCK_SIZE_MASK) - sizeRequested) > 64)
+    {
+        // Split the wilderness block here
+        void *new_wilderness_ptr = wilderness;
+        new_wilderness_ptr += (sizeRequested);
 
-    wilderness->header = sizeRequested + 3;
+        sf_block *new_wilderness = (sf_block *) new_wilderness_ptr;
 
-    // Add the new wilderness to the list;
-    //debug("changing the wilderness block in the list");
-    //debug("size of the new wilderness %lu", (new_wilderness->header & BLOCK_SIZE_MASK));
-        new_wilderness->body.links.next = &sf_free_list_heads[9];
-        new_wilderness->body.links.prev = &sf_free_list_heads[9];
-        sf_free_list_heads[9].body.links.next = new_wilderness;
-        sf_free_list_heads[9].body.links.prev = new_wilderness;
+        new_wilderness->prev_footer = sizeRequested + 1;
+        new_wilderness->header = wilderness->header - sizeRequested;
 
-        sf_block * epilogue = sf_mem_end() - 16;
-        //debug("epilogue %p", epilogue);
-        writeEpilogue(epilogue, new_wilderness);
-         
-        if((new_wilderness->header & BLOCK_SIZE_MASK) == 0)
-         {
-            sf_free_list_heads[9].body.links.next = &sf_free_list_heads[9];
-            sf_free_list_heads[9].body.links.prev = &sf_free_list_heads[9];
-         }
+        wilderness->header = sizeRequested + 3;
 
-    wilderness_block = new_wilderness;
+        // Add the new wilderness to the list;
+        //debug("changing the wilderness block in the list");
+        //debug("size of the new wilderness %lu", (new_wilderness->header & BLOCK_SIZE_MASK));
+            new_wilderness->body.links.next = &sf_free_list_heads[9];
+            new_wilderness->body.links.prev = &sf_free_list_heads[9];
+            sf_free_list_heads[9].body.links.next = new_wilderness;
+            sf_free_list_heads[9].body.links.prev = new_wilderness;
 
-    return wilderness;
+            sf_block * epilogue = sf_mem_end() - 16;
+            //debug("epilogue %p", epilogue);
+            writeEpilogue(epilogue, new_wilderness);
+
+        wilderness_block = new_wilderness;
+
+        return wilderness;
+    } else {
+        wilderness->header = wilderness->header + 1;
+
+        sf_block *epilogue = sf_mem_end() - 16;
+        epilogue->prev_footer = wilderness->header;
+        epilogue->header += 2;
+        sf_free_list_heads[9].body.links.next = &sf_free_list_heads[9];
+        sf_free_list_heads[9].body.links.prev = &sf_free_list_heads[9];    
+    
+        return wilderness;
+    }
+
+
+    
 }
 
 /**
@@ -274,39 +310,46 @@ Function to use a normal block to allocate memory
 */
 sf_block *allocateBlock(sf_block *block, size_t sizeRequested)
 {
+
+    block->body.links.prev->body.links.next = block->body.links.next;
+    block->body.links.next->body.links.prev = block->body.links.prev;
+
     if(((block->header & BLOCK_SIZE_MASK) - sizeRequested) >= 64)
     {
         // Splinter split the block and return the newly allocated block
-
-        block->body.links.prev->body.links.next = block->body.links.next;
-        block->body.links.next->body.links.prev = block->body.links.prev;
-
         size_t new_size = (block->header & BLOCK_SIZE_MASK)- sizeRequested;
 
         block->header = new_size;
         // change block prev allocated 
         void *next_block = block;
-        next_block += new_size;
+        next_block += sizeRequested;
 
-        sf_block *allocated_block = (sf_block *)next_block;
-        allocated_block->header = sizeRequested + 1;
-        allocated_block->prev_footer = block->header;
+        sf_block *unallocated_block = (sf_block *)next_block;
+        unallocated_block->header = new_size + 2;
+        unallocated_block->prev_footer = block->header;
 
         int index = getIndexInList(new_size);
-        addNewBlockToList(block, index);
+        addNewBlockToList(unallocated_block, index);
 
-        return allocated_block;
+        return block;
     } else {
         // change the header to indicate it is allocated
         block->header = block->header + 1;
         // change the prev_footer of the next block to indicate that the prev_block is now allocated
-        sf_block *next_block = block + 1;
+        //sf_block *next_block = block + 1;
+        void *next_block_ptr = block;
+        next_block_ptr += (block->header & BLOCK_SIZE_MASK);
+
+        sf_block *next_block = next_block_ptr;
+
         next_block->prev_footer = block->header;
+        next_block->header = next_block->header + 2;
+
         
         // remove the block from the list
-        sf_block *temp = block->body.links.prev;
-        temp->body.links.next = block->body.links.next;
-        block->body.links.next->body.links.prev = temp;
+        // sf_block *temp = block->body.links.prev;
+        // temp->body.links.next = block->body.links.next;
+        // block->body.links.next->body.links.prev = temp;
         // return the block
         return block;
     }
@@ -324,6 +367,8 @@ int validate_pointer(void *pp)
 
 
     debug("got curr and next block");
+    debug("%lu prev block allocated", curr_block->header & PREV_BLOCK_ALLOCATED);
+    debug("%lu prev block allocated 2", curr_block->prev_footer & THIS_BLOCK_ALLOCATED);
 
     if(pp == NULL)
     return -1;
@@ -414,14 +459,15 @@ sf_block *coalesce_blocks(void *pp)
     {
         // coalesce the prev block
         debug("prev block is free");
-        sf_block *prev_block = (sf_block*) pp - 16 - (curr_block->prev_footer & BLOCK_SIZE_MASK);
-
+        sf_block *prev_block = (sf_block*) (pp - 16 - (curr_block->prev_footer & BLOCK_SIZE_MASK));
+        debug("found previous block");
         if((prev_block->header & PREV_BLOCK_ALLOCATED) == 2)
-        prev_block->header = (prev_block->header & BLOCK_SIZE_MASK) + (curr_block->header & BLOCK_SIZE_MASK) + 2;
+        prev_block->header = (prev_block->header) + (curr_block->header & BLOCK_SIZE_MASK);
         else
         prev_block->header = prev_block->header + curr_block->header;
         next_block->prev_footer = prev_block->header;
-        debug("prev block is also free %lu", prev_block->header & BLOCK_SIZE_MASK);
+        next_block->header = next_block->header-2;
+        debug("prev block is also free %lu", next_block->header);
 
         // remove the prev block from the free list
         // sf_block *temp = prev_block->body.links.prev;
@@ -438,7 +484,7 @@ sf_block *coalesce_blocks(void *pp)
         debug("prev and next block free");
         sf_block *prev_block = pp - 16 - (curr_block->prev_footer & BLOCK_SIZE_MASK);
         debug("found prev block");
-        prev_block->header = prev_block->header + (curr_block->header & BLOCK_SIZE_MASK) + (next_block->header);
+        prev_block->header = prev_block->header + (curr_block->header & BLOCK_SIZE_MASK) + (next_block->header) - 2;
         debug("changed prev header");
         sf_block *next_next_block = pp - 16 + (curr_block->header & BLOCK_SIZE_MASK) + (next_block->header & BLOCK_SIZE_MASK);
         debug("found next to next ");
@@ -501,7 +547,7 @@ void *sf_malloc(size_t size) {
                 return NULL;
             }
         }
-        //debug("need to use wilderness block");
+        debug("need to use wilderness block");
         block = checkWildernessBlock(correct_size);
         {
            // debug("%p", block);
@@ -513,7 +559,7 @@ void *sf_malloc(size_t size) {
         }
     }
     else {
-        //debug("found a good enough block which is stored in block variable");
+        debug("found a good enough block which is stored in block variable");
         sf_block *allocated = allocateBlock(block, correct_size);
         return allocated->body.payload;
     }
@@ -524,7 +570,7 @@ void *sf_malloc(size_t size) {
 
 void sf_free(void *pp) {
     int valid = validate_pointer(pp);
-    //debug("pointer is valid : %d", valid);
+    debug("pointer is valid : %d", valid);
     if(valid == -1)
     abort();
     sf_block *new_free_block = coalesce_blocks(pp);
@@ -550,12 +596,83 @@ void sf_free(void *pp) {
         addNewBlockToList(new_free_block, index);
     }
     debug("%p", new_free_block);
-    sf_show_heap();
+    //sf_show_heap();
 
     return;
 }
 
 void *sf_realloc(void *pp, size_t rsize) {
+
+    sf_block *current_block = pp - 16;
+    size_t current_size = (current_block->header & BLOCK_SIZE_MASK);
+
+    if(current_size > rsize)
+    {
+        // realloc to a smaller block
+        debug("realloc to a smaller block");
+        if((current_size - rsize) <= 64)
+        {
+            debug("realloc causing splinter");
+            // results in a splinter
+            return pp;
+        } else {
+
+            debug("realloc not causing a splinter ******************************");
+
+            rsize = roundTo64(rsize + 8);
+
+            sf_show_heap();
+
+            size_t new_size = current_size - rsize;
+            
+            void *new_block = current_block;
+            new_block += rsize;
+
+            if((current_block->header & PREV_BLOCK_ALLOCATED) == 2)
+            current_block->header = rsize + 3;
+            else
+            current_block->header = rsize + 1;
+
+
+            sf_block *unallocated_block = (sf_block *)new_block;
+            unallocated_block->header = new_size + 2;
+            unallocated_block->prev_footer = current_block->header;
+
+            sf_block *free_block = coalesce_blocks(unallocated_block->body.payload);
+            debug("RETURNED FROM COALESCE BLOCK ********************");
+             sf_block *sf_epilogue = sf_mem_end() - 16;
+            debug("%lu", sf_epilogue->prev_footer & BLOCK_SIZE_MASK);
+            void *start_wilderness = sf_mem_end() - 16 - (sf_epilogue->prev_footer & BLOCK_SIZE_MASK);
+            debug("%p", start_wilderness);
+            debug("%p", free_block);
+            if((size_t)start_wilderness == (size_t)free_block) 
+            { debug("freed wilderness block");
+            free_block->body.links.next = &sf_free_list_heads[9];
+            free_block->body.links.prev = &sf_free_list_heads[9];
+            sf_free_list_heads[9].body.links.next = free_block;
+            sf_free_list_heads[9].body.links.prev = free_block;
+            }
+            else 
+            {
+                debug("freed regular block");
+                int index = getIndexInList(free_block->header & BLOCK_SIZE_MASK);
+                addNewBlockToList(free_block, index);
+            }
+            debug("%p", free_block);
+            sf_show_heap();
+
+            return current_block->body.payload;
+        }
+
+    } else {
+        // realloc to a bigger block
+        debug("REALLOC TO A LARGER BLOCK *******************************");
+        void *new_block = sf_malloc(rsize);
+        debug("RETURN FROM REALLOC MALLOC");
+        memcpy(new_block, pp, current_size);
+        sf_free(pp);
+        return new_block;
+    }
     return NULL;
 }
 
