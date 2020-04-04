@@ -28,5 +28,10 @@ int grow_heap();
 sf_block *allocateBlock(sf_block *block, size_t sizeRequested);
 // Function to use the wilderness block to allocate
 sf_block *allocateWilderness(size_t sizeRequested);
-
+// Function to coalesce blocks
+sf_block *coalesce_blocks(void *pp);
+// Function to validate a pointer
+int validate_pointer(void *pp);
+// Function to check if align is power of 2
+bool checkAlign(size_t align);
 #endif

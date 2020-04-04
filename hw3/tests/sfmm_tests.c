@@ -3,6 +3,7 @@
 #include <signal.h>
 #include "debug.h"
 #include "sfmm.h"
+#include "custom.h"
 
 void assert_free_block_count(size_t size, int count);
 void assert_free_list_block_count(size_t size, int count);
@@ -208,3 +209,66 @@ Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init,
 //DO NOT DELETE THESE COMMENTS
 //############################################
 
+Test(sf_memsuite_student, test_round_to_64, .init = sf_mem_init, .fini = sf_mem_fini) {
+	size_t checked = roundTo64(sizeof(int));
+	
+	cr_assert(checked == 64, "Rounded Size is not correct");
+
+}
+
+Test(sf_memsuite_student, test_two_malloc_simultaneous, .init = sf_mem_init, .fini = sf_mem_fini) {
+
+	int *x = sf_malloc(sizeof(int));
+	int *y = sf_malloc(sizeof(int));
+
+	cr_assert_not_null(x, "x is NULL!");
+	cr_assert_not_null(y, "y is NULL!");
+
+	*x = 5;
+	*y = 8;
+
+	cr_assert(*x == 5, "sf_malloc failed to give proper space for an int!");
+	cr_assert(*y == 8, "sf_malloc failed to give proper space for an int!");
+
+	assert_free_block_count(0, 1);
+
+}
+
+Test(sf_memsuite_student, test_two_malloc_free_simultaneous, .init = sf_mem_init, .fini = sf_mem_fini) {
+	int *x = sf_malloc(sizeof(int));
+	int *y = sf_malloc(sizeof(int));
+
+	cr_assert_not_null(x, "x is NULL!");
+	cr_assert_not_null(y, "y is NULL!");
+
+	*x = 5;
+	*y = 8;
+
+	cr_assert(*x == 5, "sf_malloc failed to give proper space for an int!");
+	cr_assert(*y == 8, "sf_malloc failed to give proper space for an int!");
+
+	sf_free(x);
+	sf_free(y);
+
+	assert_free_block_count(0, 1);
+}
+
+Test(sf_memsuite_student, test_realloc_same, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *x = sf_malloc(sizeof(int));
+	void *y = sf_realloc(x, sizeof(int));
+
+	assert_free_block_count(3904, 1);
+	
+	cr_assert_not_null(y, "y is NULL!");
+
+}
+
+Test(sf_memsuite_student, test_realloc_oom, .init = sf_mem_init, .fini = sf_mem_fini) {
+	
+	void *x = sf_malloc(sizeof(double));
+	void *y = sf_realloc(x, PAGE_SZ << 16);
+
+	cr_assert_null(y, "y is not NULL!");
+	assert_free_block_count(0, 1);
+
+}

@@ -148,14 +148,14 @@ sf_block *searchFreeLists(size_t size, int index)
 {
     do {
         sf_block *temp = sf_free_list_heads[index].body.links.next;
-        while(temp->body.links.next != &sf_free_list_heads[index])
+        while(temp != &sf_free_list_heads[index])
         {
             size_t size_block = (temp->header & BLOCK_SIZE_MASK); 
             if(size_block >= size)
             return temp;
             temp = temp->body.links.next;
         }
-        // debug("searched index %d", index);
+        debug("searched index %d ***********************************************************", index);
         index++;
     } while(index != 9);
     return NULL;
@@ -329,6 +329,8 @@ sf_block *allocateBlock(sf_block *block, size_t sizeRequested)
         unallocated_block->prev_footer = block->header;
 
         int index = getIndexInList(new_size);
+
+        unallocated_block = coalesce_blocks(unallocated_block->body.payload);
         addNewBlockToList(unallocated_block, index);
 
         return block;
@@ -440,7 +442,11 @@ sf_block *coalesce_blocks(void *pp)
         debug("next block is also free");
         size_t next_block_size = next_block->header & BLOCK_SIZE_MASK;
         debug("next block size is %lu", next_block_size);
-        curr_block->header = curr_block->header + next_block_size - 1;
+        if(prev_allocated == 2)
+        curr_block->header = (curr_block->header & BLOCK_SIZE_MASK) + next_block_size + 2;
+        else
+        curr_block->header = (curr_block->header &  BLOCK_SIZE_MASK) + next_block_size;
+        debug("coalesce block allocated is %lu", (curr_block->header & THIS_BLOCK_ALLOCATED));
         sf_block *next_next_block = pp - 16 + (curr_block->header & BLOCK_SIZE_MASK);
         next_next_block->prev_footer = curr_block->header;
         debug("new block size is %lu", curr_block->header & BLOCK_SIZE_MASK);
@@ -508,6 +514,24 @@ sf_block *coalesce_blocks(void *pp)
     return NULL;
 }
 
+/*
+Helper functions for the sf_memalign
+************************************************************************************************************
+*/
+bool checkAlign(size_t align)
+{
+
+    size_t values = 1;
+
+    while(values < align)
+    values = values * 2;
+
+    debug("values is %lu", values);
+
+    return (values != align);
+
+}
+
 
 /**
 End of helper functions for the dynamic memory allocator
@@ -529,7 +553,7 @@ void *sf_malloc(size_t size) {
     int indexToStart = getIndexInList(correct_size);
 
     //debug("index to start looking from %d", indexToStart);
-    //debug("correct size requested %ld ", correct_size);
+    debug("correct size requested %ld *************************************", correct_size);
     sf_block *block = searchFreeLists(correct_size, indexToStart);
 
     if(block == NULL)
@@ -619,9 +643,9 @@ void *sf_realloc(void *pp, size_t rsize) {
 
             debug("realloc not causing a splinter ******************************");
 
-            rsize = roundTo64(rsize + 8);
+            rsize = roundTo64(rsize);
 
-            sf_show_heap();
+           // sf_show_heap();
 
             size_t new_size = current_size - rsize;
             
@@ -647,6 +671,7 @@ void *sf_realloc(void *pp, size_t rsize) {
             debug("%p", free_block);
             if((size_t)start_wilderness == (size_t)free_block) 
             { debug("freed wilderness block");
+            debug("freed block allocated bit is %lu", (free_block->header & THIS_BLOCK_ALLOCATED));
             free_block->body.links.next = &sf_free_list_heads[9];
             free_block->body.links.prev = &sf_free_list_heads[9];
             sf_free_list_heads[9].body.links.next = free_block;
@@ -659,7 +684,7 @@ void *sf_realloc(void *pp, size_t rsize) {
                 addNewBlockToList(free_block, index);
             }
             debug("%p", free_block);
-            sf_show_heap();
+            //sf_show_heap();
 
             return current_block->body.payload;
         }
@@ -669,6 +694,7 @@ void *sf_realloc(void *pp, size_t rsize) {
         debug("REALLOC TO A LARGER BLOCK *******************************");
         void *new_block = sf_malloc(rsize);
         debug("RETURN FROM REALLOC MALLOC");
+        if(new_block != NULL)
         memcpy(new_block, pp, current_size);
         sf_free(pp);
         return new_block;
@@ -677,5 +703,72 @@ void *sf_realloc(void *pp, size_t rsize) {
 }
 
 void *sf_memalign(size_t size, size_t align) {
+
+    size_t offset = align - 48 - 16;
+
+    if(checkAlign(align) || (align < 64))
+    {
+        debug("alignment issue");
+        sf_errno = EINVAL;
+        return NULL;
+    }
+
+    void *first_alloc = sf_malloc(size + align + 64);
+
+    //sf_show_heap();
+
+    sf_block *first_alloc_block = first_alloc - 16;
+
+    debug("%lu", first_alloc_block->header & BLOCK_SIZE_MASK);
+
+
+    if((align - 48) == 16)
+    {
+        debug("already aligned");
+        return sf_realloc(first_alloc, size);
+    } else {
+        void *first_block_pointer = (void *)first_alloc_block;
+        first_block_pointer += (offset);
+
+        sf_block *new_block = (sf_block *)first_block_pointer;
+
+            // free the first portion of the block
+
+            debug("freeing the first portion of the block");
+
+
+            debug("Size of the new block is %lu", new_block->header & BLOCK_SIZE_MASK);
+            debug("Size of the first block is %lu", first_alloc_block->header & BLOCK_SIZE_MASK);
+
+            if((first_alloc_block->header & PREV_BLOCK_ALLOCATED) == 2)
+            first_alloc_block->header = offset + 3;
+            else
+            first_alloc_block->header = offset + 1 ;
+
+            new_block->header = roundTo64(size + align + 64) - (first_alloc_block->header & BLOCK_SIZE_MASK) + 3;
+
+            new_block->prev_footer = first_alloc_block->header;
+
+            //sf_show_heap();
+
+            void *next_pinter = new_block;
+            next_pinter += new_block->header & BLOCK_SIZE_MASK;
+            sf_block *next_next_block = next_pinter;
+            next_next_block->prev_footer = new_block->header;
+
+            debug("first alloc block size is %lu",( first_alloc_block->header & BLOCK_SIZE_MASK));
+        
+            sf_free(first_alloc_block->body.payload);
+
+            //sf_show_heap();
+
+            return sf_realloc(new_block->body.payload, size);
+
+
+    }
+
+
+    debug("skipped everything");
+
     return NULL;
 }
