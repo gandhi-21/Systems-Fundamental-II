@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "polya.h"
 
+
 struct problem *problem_actual;
 struct result *solution;
 
@@ -42,12 +43,10 @@ void sigterm_handler(int sig)
 int worker(void) {
     // TO BE IMPLEMENTED
 
-    debug("Sending a sigstop siganl to master");
-
     signal(SIGHUP, sighup_handler);
     signal(SIGTERM, sigterm_handler);
 
-    pid_t ipid = getpid();
+    // pid_t ipid = getpid();
 
     sigset_t mask_child, prev_one;
 
@@ -62,6 +61,7 @@ int worker(void) {
 
     while(1)
     {    
+        debug("Sending a sigstop signal to master");
         raise(SIGSTOP);
         struct problem *header = (struct problem *)(malloc(sizeof(struct problem)));
 
@@ -80,7 +80,7 @@ int worker(void) {
 
 
         sigprocmask(SIG_BLOCK, &mask_child, &prev_one);
-        if(cancel_solution == 1)
+        if(cancel_solution == 1 || solution == NULL)
         {
             struct result fake_solution = {sizeof(struct result), problem_actual->id, 1, "", ""};
             fwrite(&fake_solution, sizeof(struct result), 1, stdout);
