@@ -40,3 +40,12 @@ Test(demo_master_suite, miner_test_one_worker) {
                  "Program exited with %d instead of EXIT_SUCCESS",
 		 return_code);
 }
+
+Test(demo_master_suite, miner_test_three_workers) {
+    char *cmd = "demo/polya -p 5 -t 2 -w 3";
+    int return_code = WEXITSTATUS(system(cmd));
+
+    cr_assert_eq(return_code, EXIT_SUCCESS,
+                 "Program exited with %d instead of EXIT_SUCCESS",
+		 return_code);
+}
