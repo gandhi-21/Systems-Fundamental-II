@@ -20,16 +20,6 @@ struct base_worker{
 
 struct base_worker *workers_array[MAX_WORKERS];
 
-int all_workers_idle(int workers)
-{
-    for(int i=0;i<workers;i++)
-    {
-        if(workers_array[i]->status != WORKER_IDLE)
-        return -1;
-    }
-
-    return 0;
-}
 
 int getIndex(pid_t pidd)
 {
