@@ -72,6 +72,12 @@ int worker(void) {
         kill(getpid(), SIGSTOP);
         struct problem *header = (struct problem *)(malloc(sizeof(struct problem)));
 
+      if(header == NULL)
+      {
+          fprintf(stderr, "MALLOC FAILED\n");
+          return EXIT_FAILURE;
+      }
+
         sigprocmask(SIG_BLOCK, &mask_child, NULL);
 
       //  sigsuspend(&prev_one);
@@ -85,21 +91,21 @@ int worker(void) {
       //  debug("read the problem from the master");
 
         problem_actual = (struct problem *)(malloc(header->size));
-        memcpy(problem_actual, header, sizeof(struct problem));
 
+      if(problem_actual == NULL)
+      {
+        fprintf(stderr, "MALLOC FAILED\n");
+        return EXIT_FAILURE;
+      }
+
+        memcpy(problem_actual, header, sizeof(struct problem));
         //fread(problem_actual->data, problem_actual->size - sizeof(*header), 1, stdin);
         read(0, problem_actual->data, problem_actual->size - sizeof(struct problem));
-
        // debug("read the problem data from the master");
-
         sigprocmask(SIG_UNBLOCK, &mask_child, NULL);
-
        // debug("read the problem from the master %lu ", problem_actual->size);
-
         solution = solvers[problem_actual->type].solve(problem_actual, &cancel_solution);
-
        // debug("done with the solve part");
-
         sigprocmask(SIG_BLOCK, &mask_child, NULL);
        // sigsuspend(&prev_one);
         if(cancel_solution == 1 || solution == NULL)
@@ -111,10 +117,8 @@ int worker(void) {
             write(1, solution, sizeof(struct result));
             write(1, solution->data, solution->size - sizeof(struct result));
         }
-
         fflush(stdout);
         sigprocmask(SIG_UNBLOCK, &mask_child, NULL);
-
         debug("done with the solution in the worker");
     }
 

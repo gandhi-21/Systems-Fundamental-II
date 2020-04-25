@@ -57,13 +57,19 @@ void sigchld_handler(int sig)
     {
        // int returned = WIFSTOPPED(worker_status);
         int did_exit = WIFEXITED(worker_status);
-      //  int did_no = WIFSIGNALED(worker_status);
+        int did_no = WIFSIGNALED(worker_status);
       //  int did_continue = WIFCONTINUED(worker_status);
 
         //debug("child pid %u and returned is %d and did it exit %d and unkown signal %d and did it continue %d", child_pid, returned, did_exit, did_no, did_continue);
         int index = getIndex(child_pid);
         //debug("index of pid is %d ", index);
         //debug("current state of worker is %d ", workers_array[index]->status);
+
+        if(did_no != 0)
+        {
+            workers_array[index]->status = WORKER_ABORTED;
+            sf_change_state(child_pid, WORKER_RUNNING, WORKER_ABORTED);
+        }
 
         if(did_exit && workers_array[index]->status == WORKER_IDLE)
         {
@@ -181,6 +187,7 @@ int master(int workers) {
             //waitpid(-1, NULL, WUNTRACED);
             struct base_worker *current_worker = (struct base_worker *)malloc(sizeof(struct base_worker));
             current_worker->id = p;
+            sf_change_state(p, 0, WORKER_STARTED);
             current_worker->status = WORKER_STARTED;
             current_worker->fd[0] = second;
             current_worker->fd[1] = first;
@@ -241,17 +248,16 @@ int master(int workers) {
          //   debug("sent a problem to the worker with current state %d", workers_array[i]->status);
 
             sigprocmask(SIG_UNBLOCK, &mask_child, NULL);
-
+            sleep(1);
             // send a sigcont signal
             kill(workers_array[i]->id, SIGCONT);
             // change the state of the worker
-
+         //   waitpid(workers_array[i]->id, NULL, WCONTINUED);
             // sf_change_state(workers_array[i]->id, WORKER_CONTINUED, WORKER_RUNNING);
             // workers_array[i]->status = WORKER_RUNNING;
             
         } 
         
-        //sigsuspend(&child);
 
         if(workers_array[i]->status == WORKER_STOPPED)
         {
@@ -263,36 +269,47 @@ int master(int workers) {
             read(workers_array[i]->fd[0], current_result, sizeof(struct result));
          //   debug("read the solution header, and the size of %ld and byte read is %d", current_result->size, byte_read);
             struct result *correct_result = (struct result *)(malloc(current_result->size));
-            memcpy(correct_result, current_result, sizeof(struct result));
-            read(workers_array[i]->fd[0], correct_result->data, correct_result->size - sizeof(struct result));
-            //debug("read the whole solution %ld", sizeof(current_result));
 
-            if(correct_result->failed)
+            if(result == NULL)
             {
-                debug("received a failed result possibly from sighup handler");
+                // exit and abort
+                fprintf(stderr, "MALLOC FAILED\n");
+                sf_cancel(workers_array[j]->id);
+                kill(workers_array[j]->id, SIGHUP);
             } else {
-                sf_recv_result(workers_array[i]->id, correct_result);   
-                post_result(correct_result, workers_array[i]->currently_solving);   
-            }
-            sf_change_state(workers_array[i]->id, WORKER_STOPPED, WORKER_IDLE);
-            workers_array[i]->status = WORKER_IDLE; 
-            sigprocmask(SIG_UNBLOCK, &mask_child, NULL);
-            // post the result
-            // send sighup to all the workers working on the same problem
-            if(!correct_result->failed)
-            {
-                for(int j=0;j<workers;j++)
+                memcpy(correct_result, current_result, sizeof(struct result));
+                read(workers_array[i]->fd[0], correct_result->data, correct_result->size - sizeof(struct result));
+                //debug("read the whole solution %ld", sizeof(current_result));
+
+                if(correct_result->failed)
                 {
-                    if(j==i)
-                    continue;
-                    if(workers_array[j]->problem_id == correct_result->id)
+                    debug("received a failed result possibly from sighup handler");
+                } else {
+                    sf_recv_result(workers_array[i]->id, correct_result);   
+                    post_result(correct_result, workers_array[i]->currently_solving);   
+                }
+                sf_change_state(workers_array[i]->id, WORKER_STOPPED, WORKER_IDLE);
+                workers_array[i]->status = WORKER_IDLE; 
+                sigprocmask(SIG_UNBLOCK, &mask_child, NULL);
+                // post the result
+                // send sighup to all the workers working on the same problem
+                if(!correct_result->failed)
+                {
+                    for(int j=0;j<workers;j++)
                     {
-                        debug("probem was solved and sighup was sent to the worker");
-                        sf_cancel(workers_array[j]->id);
-                        kill(workers_array[j]->id, SIGHUP);
+                        if(j==i)
+                        continue;
+                        if(workers_array[j]->problem_id == correct_result->id)
+                        {
+                            debug("probem was solved and sighup was sent to the worker");
+                            sf_cancel(workers_array[j]->id);
+                            kill(workers_array[j]->id, SIGHUP);
+                        }
                     }
                 }
             }
+
+            
 
         } 
 
@@ -304,11 +321,22 @@ int master(int workers) {
 
     for(int i=0;i<workers;i++)
     {
-            kill(workers_array[i]->id, SIGCONT);
-            kill(workers_array[i]->id, SIGTERM);
+        close(workers_array[i]->fd[0]);
+        close(workers_array[i]->fd[1]);
+        kill(workers_array[i]->id, SIGCONT);
+        kill(workers_array[i]->id, SIGTERM);
     }
     debug("Terminated all workers and ended the program");
-    sf_end();
 
+    // all workers should be at exit now and 
+    for(int j=0;j<workers;j++){
+        if(workers_array[i]->status != WORKER_EXITED)
+        {
+            sf_end();
+            return EXIT_FAILURE;
+        }
+    }
+
+    sf_end();
     return EXIT_SUCCESS;
 }
