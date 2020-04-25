@@ -47,7 +47,7 @@ void sigchld_handler(int sig)
     {
        // int returned = WIFSTOPPED(worker_status);
         int did_exit = WIFEXITED(worker_status);
-        int did_no = WIFSIGNALED(worker_status);
+      //  int did_no = WIFSIGNALED(worker_status);
       //  int did_continue = WIFCONTINUED(worker_status);
 
         //debug("child pid %u and returned is %d and did it exit %d and unkown signal %d and did it continue %d", child_pid, returned, did_exit, did_no, did_continue);
@@ -55,11 +55,11 @@ void sigchld_handler(int sig)
         //debug("index of pid is %d ", index);
         //debug("current state of worker is %d ", workers_array[index]->status);
 
-        if(did_no != 0)
-        {
-            workers_array[index]->status = WORKER_ABORTED;
-            sf_change_state(child_pid, WORKER_RUNNING, WORKER_ABORTED);
-        }
+        // if(did_no != 0)
+        // {
+        //     workers_array[index]->status = WORKER_ABORTED;
+        //     sf_change_state(child_pid, WORKER_RUNNING, WORKER_ABORTED);
+        // }
 
         if(did_exit && workers_array[index]->status == WORKER_IDLE)
         {
@@ -74,7 +74,7 @@ void sigchld_handler(int sig)
             workers_array[index]->status = WORKER_IDLE;
         }
 
-        else if(workers_array[index]->status == WORKER_RUNNING)
+        if(workers_array[index]->status == WORKER_RUNNING)
         {
           //  debug("changed from running to stoppepd");
             if(did_exit != 0) 
@@ -87,13 +87,11 @@ void sigchld_handler(int sig)
             workers_array[index]->status = WORKER_STOPPED;}
         }
 
-        else if(workers_array[index]->status == WORKER_CONTINUED)
+        if(workers_array[index]->status == WORKER_CONTINUED)
         {
           //  debug("changed from continue to running"); 
                 sf_change_state(child_pid, WORKER_CONTINUED, WORKER_RUNNING);
                 workers_array[index]->status = WORKER_RUNNING;
-        } else {
-          //  debug("done nothing");
         }
        // debug("new state of the worker is %d", workers_array[index]->status);
     }
