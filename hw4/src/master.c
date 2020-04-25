@@ -336,6 +336,7 @@ int master(int workers) {
     {
         debug("sent a sigterm");
         kill(workers_array[i]->id, SIGTERM);   
+        sf_change_state(workers_array[i]->id, WORKER_RUNNING, WORKER_EXITED);
     }
 
     // sleep(1);
