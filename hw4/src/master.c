@@ -38,7 +38,7 @@ int getIndex(pid_t pidd)
 
 void sigchld_handler(int sig)
 {
-    //debug("in the sigchild handler");
+    debug("in the sigchild handler");
 
     int worker_status;
     pid_t child_pid;
@@ -61,10 +61,31 @@ void sigchld_handler(int sig)
         //     sf_change_state(child_pid, WORKER_RUNNING, WORKER_ABORTED);
         // }
 
-        if(did_exit && workers_array[index]->status == WORKER_IDLE)
+        if(workers_array[index]->status == WORKER_IDLE)
         {
+            debug("worker is idle");
             workers_array[index]->status = WORKER_RUNNING;
             sf_change_state(child_pid, WORKER_IDLE, WORKER_RUNNING);
+            if(did_exit != 0)
+            {
+                workers_array[index]->status = WORKER_EXITED;
+                sf_change_state(child_pid, WORKER_RUNNING, WORKER_EXITED);
+            }
+        }
+        else if(workers_array[index]->status == WORKER_RUNNING)
+        {
+          //  debug("changed from running to stoppepd");
+            if(did_exit != 0) 
+            {
+                debug("worker exited");
+                sf_change_state(child_pid, WORKER_RUNNING, WORKER_EXITED);
+                workers_array[index]->status = WORKER_EXITED;
+            }
+            else
+            {
+                sf_change_state(child_pid, WORKER_RUNNING, WORKER_STOPPED);
+                workers_array[index]->status = WORKER_STOPPED;
+            }
         }
 
         if(workers_array[index]->status == WORKER_STARTED)
@@ -74,18 +95,7 @@ void sigchld_handler(int sig)
             workers_array[index]->status = WORKER_IDLE;
         }
 
-        if(workers_array[index]->status == WORKER_RUNNING)
-        {
-          //  debug("changed from running to stoppepd");
-            if(did_exit != 0) 
-            {
-                sf_change_state(child_pid, WORKER_RUNNING, WORKER_EXITED);
-                workers_array[index]->status = WORKER_EXITED;
-            }
-            else
-            {sf_change_state(child_pid, WORKER_RUNNING, WORKER_STOPPED);
-            workers_array[index]->status = WORKER_STOPPED;}
-        }
+        
 
         if(workers_array[index]->status == WORKER_CONTINUED)
         {
@@ -94,6 +104,7 @@ void sigchld_handler(int sig)
                 workers_array[index]->status = WORKER_RUNNING;
         }
        // debug("new state of the worker is %d", workers_array[index]->status);
+
     }
     
 
@@ -307,23 +318,29 @@ int master(int workers) {
       //  debug("%d ", i);
     }
 
+    // for(int i=0;i<workers;i++)
+    // workers_array[i]->status = WORKER_IDLE;
+
     for(int i=0;i<workers;i++)
     {
+        debug("state of worker %d is %d", i, workers_array[i]->status);
         close(workers_array[i]->fd[0]);
         close(workers_array[i]->fd[1]);
+        debug("sent a sigcont to %d", workers_array[i]->id);
         kill(workers_array[i]->id, SIGCONT);
-        kill(workers_array[i]->id, SIGTERM);
     }
-    debug("Terminated all workers and ended the program");
+    
+    sleep(1);
 
-    // all workers should be at exit now and 
-    // for(int j=0;j<workers;j++){
-    //     if(workers_array[i]->status != WORKER_EXITED)
-    //     {
-    //         sf_end();
-    //         return EXIT_FAILURE;
-    //     }
-    // }
+    for(int i=0;i<workers;i++)
+    {
+        debug("sent a sigterm");
+        kill(workers_array[i]->id, SIGTERM);   
+    }
+
+    // sleep(1);
+
+    debug("Terminated all workers and ended the program");
 
     sf_end();
     return EXIT_SUCCESS;
