@@ -28,14 +28,14 @@ void sighup_handler(int sig)
 
 void sigterm_handler(int sig)
 {
-   // debug("changing the value in sigterm");
-    cancel_solution = 1;
-    _exit(0);
+  debug("changing the value in sigterm");
+  cancel_solution = 1;
+  _exit(0);
 }
 
 void sigcont_handler(int sig)
 {
-  //  debug("this is a sigcont signal and was triggered");
+          debug("recieved a sigcont");
 }
 
 // *************************************************************************
@@ -50,7 +50,6 @@ int worker(void) {
     signal(SIGHUP, sighup_handler);
     signal(SIGTERM, sigterm_handler);
     signal(SIGCONT, sigcont_handler);
-
     // pid_t ipid = getpid();
 
     sigset_t mask_child;
@@ -69,7 +68,8 @@ int worker(void) {
     while(1)
     {    
        // debug("Sending a sigstop signal to master");
-        kill(getpid(), SIGSTOP);
+      kill(getpid(), SIGSTOP);
+      sleep(1);
         struct problem *header = (struct problem *)(malloc(sizeof(struct problem)));
 
       if(header == NULL)
