@@ -260,12 +260,12 @@ int master(int workers) {
          //   debug("read the solution header, and the size of %ld and byte read is %d", current_result->size, byte_read);
             struct result *correct_result = (struct result *)(malloc(current_result->size));
 
-            if(result == NULL)
+            if(correct_result == NULL)
             {
                 // exit and abort
                 fprintf(stderr, "MALLOC FAILED\n");
-                sf_cancel(workers_array[j]->id);
-                kill(workers_array[j]->id, SIGHUP);
+                sf_cancel(workers_array[i]->id);
+                kill(workers_array[i]->id, SIGHUP);
             } else {
                 memcpy(correct_result, current_result, sizeof(struct result));
                 read(workers_array[i]->fd[0], correct_result->data, correct_result->size - sizeof(struct result));
@@ -319,13 +319,13 @@ int master(int workers) {
     debug("Terminated all workers and ended the program");
 
     // all workers should be at exit now and 
-    for(int j=0;j<workers;j++){
-        if(workers_array[i]->status != WORKER_EXITED)
-        {
-            sf_end();
-            return EXIT_FAILURE;
-        }
-    }
+    // for(int j=0;j<workers;j++){
+    //     if(workers_array[i]->status != WORKER_EXITED)
+    //     {
+    //         sf_end();
+    //         return EXIT_FAILURE;
+    //     }
+    // }
 
     sf_end();
     return EXIT_SUCCESS;
