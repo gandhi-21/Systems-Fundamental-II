@@ -13,7 +13,15 @@
 #include "server.h"
 #include "debug.h"
 
+#include "csapp.h"
+
 static void terminate(int status);
+
+void sighup_handler(int sig)
+{
+    terminate(sig);
+}
+
 
 /*
  * "PBX" telephone exchange simulation.
@@ -35,10 +43,26 @@ int main(int argc, char* argv[]){
     // a SIGHUP handler, so that receipt of SIGHUP will perform a clean
     // shutdown of the server.
 
-    fprintf(stderr, "You have to finish implementing main() "
-	    "before the PBX server will function.\n");
+    // fprintf(stderr, "You have to finish implementing main() "
+	//     "before the PBX server will function.\n");
 
-    terminate(EXIT_FAILURE);
+    //int port = parse_command_line(argc, argv);
+
+    int listenfd, *connfdp;
+    socklen_t clientlen;
+    struct sockaddr_storage clientaddr;
+    pthread_t tid;
+
+    Signal(SIGHUP, sighup_handler);
+
+    listenfd = Open_listenfd(argv[2]);
+    while(1) {
+        clientlen = sizeof(struct sockaddr_storage);
+        connfdp = Malloc(sizeof(int));
+        *connfdp = Accept(listenfd, 
+            (SA *) &clientaddr, &clientlen);
+        Pthread_create(&tid, NULL, pbx_client_service, connfdp);
+    }
 }
 
 /*
