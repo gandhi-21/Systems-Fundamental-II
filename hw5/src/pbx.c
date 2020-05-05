@@ -234,5 +234,18 @@ int tu_dial(TU *tu, int ext)
 
 int tu_chat(TU *tu, char *msg)
 {
+
+    // if the state of tu is connected
+    if (tu->state == TU_CONNECTED)
+    {
+        dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "CHAT %s%s", msg, EOL);
+        dprintf(tu->file_descriptor, "CONNECTED %d%s", tu->connected, EOL);
+    } else {
+        dprintf(tu->file_descriptor, "SET THE CURRENT STATE HERE%s", EOL);
+        return -1;
+    }
+        // send the tu to the connected client
+        // send the current notification to the tu 
+    // else return -1
     return 0;
 }
