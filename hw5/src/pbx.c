@@ -14,6 +14,8 @@ struct tu {
     TU_STATE state;
     // currently connected to what extension
     int connected;
+    // semaphore for the tu object
+    sem_t mutex_tu;
 };
 
 struct pbx {
@@ -23,8 +25,11 @@ struct pbx {
     TU *telephone_units[PBX_MAX_EXTENSIONS];
     // is the tu free
     int isFree[PBX_MAX_EXTENSIONS];
+    // semaphore for the pbx object
+    sem_t mutex_pbx;
 };
 
+void print_state(TU *tu);
 
 PBX *pbx_init()
 {
@@ -33,11 +38,16 @@ PBX *pbx_init()
 
     debug("malloced the pbx structure in init");
 
+    sem_init(&pbx->mutex_pbx, 0, 1);
+
+    P(&pbx->mutex_pbx);
+
     pbx->registered_tu = 0;
 
     for(int i=0;i<PBX_MAX_EXTENSIONS;i++)
     {pbx->isFree[0] = 0;}
 
+    V(&pbx->mutex_pbx);
     debug("initialized the array so all extensions are free");
 
     return pbx;
@@ -57,16 +67,20 @@ TU *pbx_register(PBX *pbx, int fd)
     TU *new_extension =  malloc(sizeof(TU));
 
     // Find the first free extension
+    P(&pbx->mutex_pbx);
     int index=0;
     for(int i=0;i<PBX_MAX_EXTENSIONS;i++)
-    {
-        if(pbx->isFree[i] == 0)
         {
-            index = i;
-            pbx->isFree[i] = 1;
-            break;
+            if(pbx->isFree[i] == 0)
+                {
+                    index = i;
+                    pbx->isFree[i] = 1;
+                    break;
+                }
         }
-    }
+
+    sem_init(&new_extension->mutex_tu, 0, 1);
+    P(&new_extension->mutex_tu);
 
     new_extension->extension_number = index;
     new_extension->file_descriptor = fd;
@@ -83,20 +97,27 @@ TU *pbx_register(PBX *pbx, int fd)
     // Return the new extension
     dprintf(new_extension->file_descriptor, "ON HOOK %d%s", new_extension->extension_number, EOL);
 
+    V(&new_extension->mutex_tu);
+    V(&pbx->mutex_pbx);
+
     return new_extension;
 }
 
 int pbx_unregister(PBX *pbx, TU *tu)
 {
 
+    P(&pbx->mutex_pbx);
+    P(&tu->mutex_tu);
+
     int index = tu->extension_number;
 
     // remove the tu from the pbx array
-    pbx->telephone_units[tu->extension_number] = NULL;
+    pbx->telephone_units[index] = NULL;
 
     // pbx->isFree set to 0
-    pbx->isFree[tu->extension_number] = 0;
+    pbx->isFree[index] = 0;
 
+    V(&tu->mutex_tu);
     // free that tu pointer
     free(tu);
 
@@ -104,6 +125,8 @@ int pbx_unregister(PBX *pbx, TU *tu)
     pbx->registered_tu -= 1;
 
     debug("Unregistered the telephone unit at %d", index);
+
+    V(&pbx->mutex_pbx);
 
     return 0;
 }
@@ -120,132 +143,195 @@ int tu_extension(TU *tu)
 
 int tu_pickup(TU *tu)
 {
-    if(tu->state == TU_RINGING)
+    debug("[%d] PICKUP", tu->extension_number);
+    P(&pbx->mutex_pbx);
+    P(&tu->mutex_tu);
+    if(tu->state == TU_DIAL_TONE || tu->state == TU_RING_BACK || tu->state == TU_BUSY_SIGNAL || tu->state == TU_ERROR)
     {
-        // change the state to connected 
-        tu->state = TU_CONNECTED;
-        pbx->telephone_units[tu->connected]->state = TU_CONNECTED;
-        debug("Telephone unit %d connected to %d", tu->extension_number, tu->connected);
-        dprintf(tu->file_descriptor, "CONNECTED %d%s", tu->connected, EOL);
-        dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "CONNECTED %d%s", tu->extension_number, EOL);
-    } else {
-        tu->state = TU_DIAL_TONE;
-        debug("Telephone unit %d now in dial tone", tu->extension_number);
-        dprintf(tu->file_descriptor, "DIAL TONE%s", EOL);
-    }
+        print_state(tu);
+        V(&tu->mutex_tu);
+    } else if (tu->state == TU_CONNECTED) 
+        {
+            print_state(tu);
+            V(&tu->mutex_tu);
+        } else {
+                if(tu->state == TU_ON_HOOK)
+                    {
+                        tu->state = TU_DIAL_TONE;
+                        print_state(tu);
+                        V(&tu->mutex_tu);
+                    } else if (tu->state == TU_RINGING)
+                        {
+                            P(&pbx->telephone_units[tu->connected]->mutex_tu);
+                            tu->state = TU_CONNECTED;
+                            pbx->telephone_units[tu->connected]->state = TU_CONNECTED;
+
+                            debug("[%d] CONNECTED [%d]", tu->extension_number, pbx->telephone_units[tu->connected]->extension_number);
+
+                            print_state(tu);
+                            print_state(pbx->telephone_units[tu->connected]);
+                            V(&pbx->telephone_units[tu->connected]->mutex_tu);
+                            V(&tu->mutex_tu);
+                        }
+                }
+    V(&pbx->mutex_pbx);
     return 0;
 }
 
 int tu_hangup(TU *tu)
 {
-    
-    // if tu is connected state then the tu goes to the on hook state
-        // the tu it is connected to also goes to the tu dial tone state
-    if(tu->state == TU_CONNECTED)
-    {
-        tu->state = TU_ON_HOOK;
-        pbx->telephone_units[tu->connected]->state = TU_DIAL_TONE;
-        dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "DIAL TONE%s", EOL);
-        debug("sent a dial tone status to %d extension", pbx->telephone_units[tu->connected]->extension_number);
-    }
-    // if tu is in ring back state then the tu goes to the on hook state
-        // the tu in the ringing state goes to the tu on hook state
-    else if (tu->state == TU_RING_BACK)
-    {
-        tu->state = TU_ON_HOOK;
-        pbx->telephone_units[tu->connected]->state = TU_ON_HOOK;
-        dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "ON HOOK %d%s", pbx->telephone_units[tu->connected]->extension_number, EOL);
-    }
-    // if tu is in the ringing state then it goes to tu on hook state
-        // the tu connected goes to the dial tone state
-    else if(tu->state == TU_RINGING)
-    {
-        tu->state = TU_ON_HOOK;
-        pbx->telephone_units[tu->connected]->state = TU_DIAL_TONE;
-        dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "DIAL TONE%s", EOL);
-    }
-    // if tu is in dial tone, busy signal or error state it goes to the on hook state
-    else if(tu->state == TU_DIAL_TONE || tu->state == TU_BUSY_SIGNAL || tu->state == TU_ERROR)
-    {
-        tu->state = TU_ON_HOOK;
-    }
+    debug("[%d] HANGUP", tu->extension_number);
 
-    // send the tu client its new state
-    dprintf(tu->file_descriptor, "ON HOOK %d%s", tu->extension_number, EOL);
-    // remove the connected variable (i don't think this matters since pickup is based on state and not on the connected variable)
-    // send the other client its new state in the if statements
+    P(&pbx->mutex_pbx);
+    P(&tu->mutex_tu);
+
+    if(tu->state == TU_ON_HOOK || tu->state == TU_DIAL_TONE || tu->state == TU_BUSY_SIGNAL || tu->state == TU_ERROR)
+    {
+        tu->state = TU_ON_HOOK;
+        print_state(tu);
+        V(&tu->mutex_tu);
+
+    } else if(tu->state == TU_RINGING)
+        {
+            P(&pbx->telephone_units[tu->connected]->mutex_tu);
+
+            tu->state = TU_ON_HOOK;
+            pbx->telephone_units[tu->connected]->state = TU_DIAL_TONE;
+
+            print_state(tu);
+            print_state(pbx->telephone_units[tu->connected]);
+
+            V(&pbx->telephone_units[tu->connected]->mutex_tu);
+            V(&tu->mutex_tu);
+
+        } else if(tu->state == TU_RING_BACK)
+            {
+                P(&pbx->telephone_units[tu->connected]->mutex_tu);
+
+                tu->state = TU_ON_HOOK;
+                pbx->telephone_units[tu->connected]->state = TU_ON_HOOK;
+
+                print_state(tu);
+                print_state(pbx->telephone_units[tu->connected]);
+
+                V(&pbx->telephone_units[tu->connected]->mutex_tu);
+                V(&tu->mutex_tu);
+
+            } else if(tu->state == TU_CONNECTED)
+                {
+                    P(&pbx->telephone_units[tu->connected]->mutex_tu);
+
+                    tu->state = TU_ON_HOOK;
+                    pbx->telephone_units[tu->connected]->state = TU_DIAL_TONE;
+
+                    print_state(tu);
+                    print_state(pbx->telephone_units[tu->connected]);
+
+                    V(&pbx->telephone_units[tu->connected]->mutex_tu);
+                    V(&tu->mutex_tu);
+                }
+    V(&pbx->mutex_pbx);
     return 0;
 }
 
 int tu_dial(TU *tu, int ext)
 {
 
-    // if the extension being called does not exist move tu to tu_error state
-    if (pbx->isFree[ext] == 0)
+    P(&pbx->mutex_pbx);
+    P(&tu->mutex_tu);
+
+    debug("[%d] DIAL [%d]", tu->extension_number, ext);
+
+    if(tu->state == TU_DIAL_TONE) 
     {
-        // the ext does not exist
-        tu->state = TU_ERROR;
-    }
-    // if the tu is in the dial tone state
-        // if ext is in the on hook state, move tu to ring back state and ext status moves to the ringing state
-        // if ext is not in on_hook state, move tu to tu busy signal and no change to the ext state
-    // if the tu was not in the dial tone state, do nothing
-    if (tu->state == TU_DIAL_TONE)
-    {
-        TU *extension = pbx->telephone_units[ext];
-        if(extension->state == TU_ON_HOOK)
+        if(pbx->isFree[ext] == 0)
+            {
+                tu->state = TU_ERROR;
+                print_state(tu);
+                
+                V(&tu->mutex_tu);
+
+            } else if(pbx->telephone_units[ext]->state == TU_ON_HOOK)
+                {
+
+                    P(&pbx->telephone_units[ext]->mutex_tu);
+
+                    tu->state = TU_RING_BACK;
+                    pbx->telephone_units[ext]->state = TU_RINGING;
+
+                    tu->connected = ext;
+                    pbx->telephone_units[ext]->connected = tu->extension_number;
+
+                    print_state(tu);
+                    print_state(pbx->telephone_units[ext]);
+
+                    V(&pbx->telephone_units[ext]->mutex_tu);
+                    V(&tu->mutex_tu);
+
+                } else 
+                    {
+                        tu->state = TU_BUSY_SIGNAL;
+                        print_state(tu);
+
+                        V(&tu->mutex_tu);
+
+                    }
+    } else
         {
-            // move tu to ring back state and ext status to ringing state
-            extension->state = TU_RINGING;
-            tu->state = TU_RING_BACK;
-        } else {
-            // move tu to the busy signal state
-            tu->state = TU_BUSY_SIGNAL;
+            print_state(tu);
+            
+            V(&tu->mutex_tu);
+
         }
-    } else {
-        // do nothing 
-    }
 
-
-    // a notification is sent to the client about the new state 
-    // if the new state is tu ring back , then the ext is also notified of its' new state tu ringing
-    if(tu->state == TU_RING_BACK)
-    {
-        // put the new extension connected value
-        TU *extension = pbx->telephone_units[ext];
-        extension->connected = tu->extension_number;
-        tu->connected = extension->extension_number;
-        // send ring back to tu client
-        dprintf(tu->file_descriptor, "RING BACK%s", EOL);
-        dprintf(extension->file_descriptor, "RINGING%s", EOL);
-        // send ringing to the ext client
-    } else if(tu->state == TU_ERROR) {
-        // send the error to the tu client
-        dprintf(tu->file_descriptor, "ERROR%s", EOL);
-    } else if(tu->state == TU_BUSY_SIGNAL) {
-        // send the busy siganl to the ru client
-        dprintf(tu->file_descriptor, "BUSY SIGNAL%s", EOL);
-    } else {
-        dprintf(tu->file_descriptor, "ON HOOK %d%s", tu->extension_number, EOL);
-    }
+    V(&pbx->mutex_pbx);
 
     return 0;
 }
 
 int tu_chat(TU *tu, char *msg)
 {
+    debug("[%d] CHAT [%d] : [%s]", tu->extension_number, tu->connected, msg);
 
-    // if the state of tu is connected
-    if (tu->state == TU_CONNECTED)
+    P(&pbx->mutex_pbx);
+    P(&tu->mutex_tu);
+
+    if(tu->state == TU_CONNECTED)
     {
+        P(&pbx->telephone_units[tu->connected]->mutex_tu);
+
+        print_state(tu);
         dprintf(pbx->telephone_units[tu->connected]->file_descriptor, "CHAT %s%s", msg, EOL);
-        dprintf(tu->file_descriptor, "CONNECTED %d%s", tu->connected, EOL);
-    } else {
-        dprintf(tu->file_descriptor, "SET THE CURRENT STATE HERE%s", EOL);
-        return -1;
-    }
-        // send the tu to the connected client
-        // send the current notification to the tu 
-    // else return -1
+
+        V(&pbx->telephone_units[tu->connected]->mutex_tu);
+        V(&tu->mutex_tu);
+
+    } else 
+        {
+            print_state(tu);
+
+            V(&tu->mutex_tu);
+
+        }
+
+    V(&pbx->mutex_pbx);
+
     return 0;
+}
+
+void print_state(TU *tu) 
+{
+
+    // check the state and print accordingly
+    if(tu->state == TU_ON_HOOK || tu->state == TU_CONNECTED)
+    {
+        if(tu->state == TU_ON_HOOK)
+        {
+            dprintf(tu->file_descriptor, "%s %d%s", tu_state_names[tu->state], tu->extension_number, EOL);
+        } else {
+            dprintf(tu->file_descriptor, "%s %d%s", tu_state_names[tu->state], tu->connected, EOL);
+        }
+    } else {
+        dprintf(tu->file_descriptor, "%s%s", tu_state_names[tu->state], EOL);
+    }
 }

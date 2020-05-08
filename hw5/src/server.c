@@ -10,7 +10,6 @@ void *pbx_client_service(void *arg)
     Free(arg);
     TU *tu_client = pbx_register(pbx, connfd);
     debug("client connecetd %p", tu_client);
-
     FILE *file = fdopen(connfd, "r");
     char user_input[MAXBUF];
 
@@ -23,29 +22,27 @@ void *pbx_client_service(void *arg)
         break;
 
         if(strcmp(user_input, "pickup") == 0) {
-            debug("Pickup the phone here.");
+       //     debug("[%d] Pickup", tu_client->extension_number);
             int pickup = tu_pickup(tu_client);
             debug("Return of the pickup is %d", pickup);
         } else if(strcmp(user_input, "hangup") == 0) {
-            debug("Hangup the phone here.");
+        //    debug("[%d] Hangup", tu_client->extension_number);
             int hangup = tu_hangup(tu_client);
             debug("Return of the hangup is %d", hangup);
-        } else if(strcmp(user_input, "dial") >= 0) {
-            debug("Dial a extension here.");
+        } else if(strncmp(user_input, "dial", 4) == 0) {
             int extension = atoi(user_input + 4);
-            debug("extension is %d", extension);
+        //    debug("[%d] DIAL [%d]", tu_client->extension_number, extension);
             int dial = tu_dial(tu_client, extension);
             debug("Return of the dial is %d", dial);
-        } else if(strcmp(user_input, "chat") >= 0) {
-            debug("Chat started with a number here");
+        } else if(strncmp(user_input, "chat", 4) == 0) {
             char *message = user_input + 4;
-            debug("Message is %s", message);
+        //    debug("[%d] CHAT [%s]", tu_client->extension_number, message);
             int chat = tu_chat(tu_client, message);
             debug("Return of chat is %d", chat);
         }
     }
 
-    debug("Closing the server since end of file was received");
+    debug("Closing the server since end of file was received for tu");
     int unregister = pbx_unregister(pbx, tu_client);
     debug("Unregistered the tu client with return status %d", unregister);
 
