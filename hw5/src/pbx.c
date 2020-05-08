@@ -95,7 +95,15 @@ TU *pbx_register(PBX *pbx, int fd)
     debug("New telephone unit registered at %d", new_extension->extension_number);
 
     // Return the new extension
-    dprintf(new_extension->file_descriptor, "ON HOOK %d%s", new_extension->extension_number, EOL);
+    int printed = dprintf(new_extension->file_descriptor, "ON HOOK %d%s", new_extension->extension_number, EOL);
+
+    if(printed == -1)
+    {
+        V(&new_extension->mutex_tu);
+        V(&pbx->mutex_pbx);
+        return NULL;
+    }
+
 
     V(&new_extension->mutex_tu);
     V(&pbx->mutex_pbx);
@@ -311,7 +319,8 @@ int tu_chat(TU *tu, char *msg)
             print_state(tu);
 
             V(&tu->mutex_tu);
-
+            V(&pbx->mutex_pbx);
+            return -1;
         }
 
     V(&pbx->mutex_pbx);
@@ -327,7 +336,7 @@ void print_state(TU *tu)
     {
         if(tu->state == TU_ON_HOOK)
         {
-            dprintf(tu->file_descriptor, "%s %d%s", tu_state_names[tu->state], tu->extension_number, EOL);
+          dprintf(tu->file_descriptor, "%s %d%s", tu_state_names[tu->state], tu->extension_number, EOL);
         } else {
             dprintf(tu->file_descriptor, "%s %d%s", tu_state_names[tu->state], tu->connected, EOL);
         }
