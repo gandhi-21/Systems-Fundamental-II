@@ -1,0 +1,9 @@
+Graded Commit:3912e89ce600d9cc78513fe884139e42d1e28bb0
+
+TEST NAME, POINTS,OUT OF
+worker_suite/worker_test_1,1,1,
+worker_suite/worker_test_2,1,1,
+worker_suite/worker_test_3,1,1,
+worker_suite/worker_test_4,1,1,
+worker_suite/worker_test_5,1,1,
+total,5,5

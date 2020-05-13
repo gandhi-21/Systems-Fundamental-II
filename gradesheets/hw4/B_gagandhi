@@ -1,0 +1,548 @@
+[----] Criterion v2.3.2
+[====] Running 13 tests from tracker_suite:
+[RUN ] tracker_suite::cancellation_test
+Running test tracker_suite/cancellation_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233939.836909: Driver <~~ START (sent at 1589233939.836799)
+                   [expect RECV]
+1589233939.837008: Driver <~~ CHANGE (sent at 1589233939.836957)
+                   [5929: init -> started]
+1589233939.837112: Driver <~~ CHANGE (sent at 1589233939.837069)
+                   [5930: init -> started]
+1589233939.838188: Driver <~~ CHANGE (sent at 1589233939.838104)
+                   [5929: started -> idle]
+1589233939.838219: Driver <~~ SEND (sent at 1589233939.838161)
+1589233939.838224: Driver <~~ CHANGE (sent at 1589233939.838164)
+                   [5929: idle -> continued]
+1589233939.839548: Driver <~~ CHANGE (sent at 1589233939.839461)
+                   [5930: started -> idle]
+1589233939.839586: Driver <~~ SEND (sent at 1589233939.839513)
+1589233939.839591: Driver <~~ CHANGE (sent at 1589233939.839515)
+                   [5930: idle -> continued]
+1589233939.839598: Driver <~~ CHANGE (sent at 1589233939.839521)
+                   [5929: continued -> running]
+1589233940.844089: Driver <~~ CHANGE (sent at 1589233940.843955)
+Worker 5930 transition (old continued, new running) is too late (exp = 1589233939.939595, sent = 1589233940.843955)
+Event tracker returned an error
+Aborting test tracker_suite/cancellation_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::cancellation_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::many_workers_many_trivial_test
+Running test tracker_suite/many_workers_many_trivial_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233940.866929: Driver <~~ START (sent at 1589233940.866822)
+                   [expect END]
+1589233940.867090: Driver <~~ CHANGE (sent at 1589233940.867031)
+                   [5940: init -> started]
+1589233940.867248: Driver <~~ CHANGE (sent at 1589233940.867201)
+                   [5941: init -> started]
+1589233940.867405: Driver <~~ CHANGE (sent at 1589233940.867358)
+                   [5942: init -> started]
+1589233940.867541: Driver <~~ CHANGE (sent at 1589233940.867522)
+                   [5943: init -> started]
+1589233940.867697: Driver <~~ CHANGE (sent at 1589233940.867678)
+                   [5944: init -> started]
+1589233940.867975: Driver <~~ CHANGE (sent at 1589233940.867900)
+                   [5945: init -> started]
+1589233940.868126: Driver <~~ CHANGE (sent at 1589233940.868080)
+                   [5946: init -> started]
+1589233940.868247: Driver <~~ CHANGE (sent at 1589233940.868228)
+                   [5947: init -> started]
+1589233940.868416: Driver <~~ CHANGE (sent at 1589233940.868392)
+                   [5948: init -> started]
+1589233940.868584: Driver <~~ CHANGE (sent at 1589233940.868560)
+                   [5949: init -> started]
+1589233940.869019: Driver <~~ CHANGE (sent at 1589233940.868993)
+                   [5940: started -> idle]
+1589233940.869065: Driver <~~ CHANGE (sent at 1589233940.869052)
+                   [5941: started -> idle]
+1589233940.869136: Driver <~~ SEND (sent at 1589233940.869123)
+1589233940.869161: Driver <~~ CHANGE (sent at 1589233940.869150)
+                   [5940: idle -> continued]
+1589233940.870071: Driver <~~ CHANGE (sent at 1589233940.870032)
+                   [5947: started -> idle]
+1589233940.870152: Driver <~~ SEND (sent at 1589233940.870139)
+1589233940.870178: Driver <~~ CHANGE (sent at 1589233940.870166)
+                   [5941: idle -> continued]
+1589233940.870210: Driver <~~ CHANGE (sent at 1589233940.870198)
+                   [5940: continued -> running]
+1589233940.870475: Driver <~~ CHANGE (sent at 1589233940.870452)
+                   [5942: started -> idle]
+1589233940.870540: Driver <~~ CHANGE (sent at 1589233940.870527)
+                   [5945: started -> idle]
+1589233940.870621: Driver <~~ SEND (sent at 1589233940.870608)
+1589233940.870656: Driver <~~ CHANGE (sent at 1589233940.870645)
+                   [5942: idle -> continued]
+1589233940.870707: Driver <~~ CHANGE (sent at 1589233940.870695)
+                   [5941: continued -> running]
+1589233940.871444: Driver <~~ CHANGE (sent at 1589233940.871405)
+                   [5948: started -> idle]
+1589233940.871504: Driver <~~ SEND (sent at 1589233940.871450)
+1589233940.871518: Driver <~~ CHANGE (sent at 1589233940.871453)
+                   [5945: idle -> continued]
+1589233940.871995: Driver <~~ CHANGE (sent at 1589233940.871969)
+                   [5942: continued -> running]
+1589233940.872065: Driver <~~ CHANGE (sent at 1589233940.872052)
+                   [5943: started -> idle]
+1589233940.872116: Driver <~~ CHANGE (sent at 1589233940.872105)
+                   [5949: started -> idle]
+1589233940.872192: Driver <~~ SEND (sent at 1589233940.872180)
+1589233940.872228: Driver <~~ CHANGE (sent at 1589233940.872217)
+                   [5947: idle -> continued]
+1589233940.872280: Driver <~~ CHANGE (sent at 1589233940.872269)
+                   [5945: continued -> running]
+1589233940.873405: Driver <~~ CHANGE (sent at 1589233940.873337)
+                   [5944: started -> idle]
+1589233940.873447: Driver <~~ SEND (sent at 1589233940.873386)
+1589233940.873455: Driver <~~ CHANGE (sent at 1589233940.873389)
+                   [5948: idle -> continued]
+1589233940.873604: Driver <~~ CHANGE (sent at 1589233940.873533)
+                   [5946: started -> idle]
+1589233940.873648: Driver <~~ CHANGE (sent at 1589233940.873561)
+                   [5947: continued -> running]
+1589233940.873658: Driver <~~ SEND (sent at 1589233940.873588)
+1589233940.873666: Driver <~~ CHANGE (sent at 1589233940.873590)
+                   [5949: idle -> continued]
+1589233940.873792: Driver <~~ CHANGE (sent at 1589233940.873697)
+                   [5948: continued -> running]
+1589233940.873839: Driver <~~ SEND (sent at 1589233940.873726)
+1589233940.873861: Driver <~~ CHANGE (sent at 1589233940.873729)
+                   [5943: idle -> continued]
+1589233940.873878: Driver <~~ CHANGE (sent at 1589233940.873790)
+                   [5949: continued -> running]
+1589233940.873889: Driver <~~ SEND (sent at 1589233940.873809)
+1589233940.873901: Driver <~~ CHANGE (sent at 1589233940.873811)
+                   [5944: idle -> continued]
+1589233940.873910: Driver <~~ CHANGE (sent at 1589233940.873838)
+                   [5943: continued -> running]
+1589233940.873924: Driver <~~ SEND (sent at 1589233940.873854)
+1589233940.873931: Driver <~~ CHANGE (sent at 1589233940.873856)
+                   [5946: idle -> continued]
+1589233940.874052: Driver <~~ CHANGE (sent at 1589233940.873972)
+                   [5944: continued -> running]
+1589233940.874124: Driver <~~ CHANGE (sent at 1589233940.874109)
+                   [5946: continued -> running]
+1589233940.974216: Driver: timeout (0, 100000)
+Timeout reading event from child
+Aborting test tracker_suite/many_workers_many_trivial_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::many_workers_many_trivial_test: (0.11s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::many_workers_several_crypto_test
+Running test tracker_suite/many_workers_several_crypto_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233940.993078: Driver <~~ START (sent at 1589233940.992982)
+                   [expect END]
+1589233940.993207: Driver <~~ CHANGE (sent at 1589233940.993160)
+                   [5959: init -> started]
+1589233940.994362: Driver <~~ CHANGE (sent at 1589233940.993274)
+                   [5960: init -> started]
+1589233940.994433: Driver <~~ CHANGE (sent at 1589233940.993401)
+                   [5961: init -> started]
+1589233940.994460: Driver <~~ CHANGE (sent at 1589233940.993531)
+                   [5962: init -> started]
+1589233940.994487: Driver <~~ CHANGE (sent at 1589233940.993659)
+                   [5963: init -> started]
+1589233940.994514: Driver <~~ CHANGE (sent at 1589233940.993788)
+                   [5964: init -> started]
+1589233940.995605: Driver <~~ CHANGE (sent at 1589233940.993921)
+                   [5965: init -> started]
+1589233940.995615: Driver <~~ CHANGE (sent at 1589233940.994062)
+                   [5966: init -> started]
+1589233940.995623: Driver <~~ CHANGE (sent at 1589233940.994190)
+                   [5967: init -> started]
+1589233940.995630: Driver <~~ CHANGE (sent at 1589233940.994324)
+                   [5968: init -> started]
+1589233940.995753: Driver <~~ CHANGE (sent at 1589233940.995687)
+                   [5959: started -> idle]
+1589233940.995787: Driver <~~ CHANGE (sent at 1589233940.995701)
+                   [5960: started -> idle]
+1589233940.995818: Driver <~~ CHANGE (sent at 1589233940.995706)
+                   [5963: started -> idle]
+1589233940.995869: Driver <~~ SEND (sent at 1589233940.995738)
+1589233940.995886: Driver <~~ CHANGE (sent at 1589233940.995740)
+                   [5959: idle -> continued]
+1589233940.996260: Driver <~~ CHANGE (sent at 1589233940.996204)
+                   [5961: started -> idle]
+1589233940.996308: Driver <~~ SEND (sent at 1589233940.996241)
+1589233940.996326: Driver <~~ CHANGE (sent at 1589233940.996243)
+                   [5960: idle -> continued]
+1589233940.996416: Driver <~~ CHANGE (sent at 1589233940.996379)
+                   [5959: continued -> running]
+1589233940.996441: Driver <~~ CHANGE (sent at 1589233940.996386)
+                   [5965: started -> idle]
+1589233940.996463: Driver <~~ SEND (sent at 1589233940.996399)
+1589233940.996476: Driver <~~ CHANGE (sent at 1589233940.996401)
+                   [5961: idle -> continued]
+1589233940.996498: Driver <~~ CHANGE (sent at 1589233940.996406)
+                   [5960: continued -> running]
+1589233940.996838: Driver <~~ CHANGE (sent at 1589233940.996784)
+                   [5964: started -> idle]
+1589233940.996877: Driver <~~ CHANGE (sent at 1589233940.996801)
+                   [5966: started -> idle]
+1589233940.996899: Driver <~~ SEND (sent at 1589233940.996822)
+1589233940.996913: Driver <~~ CHANGE (sent at 1589233940.996824)
+                   [5963: idle -> continued]
+1589233940.997482: Driver <~~ CHANGE (sent at 1589233940.997419)
+                   [5961: continued -> running]
+1589233940.997532: Driver <~~ CHANGE (sent at 1589233940.997438)
+                   [5962: started -> idle]
+1589233940.997555: Driver <~~ SEND (sent at 1589233940.997462)
+1589233940.997569: Driver <~~ CHANGE (sent at 1589233940.997464)
+                   [5964: idle -> continued]
+1589233940.997592: Driver <~~ CHANGE (sent at 1589233940.997544)
+                   [5963: continued -> running]
+1589233940.997614: Driver <~~ SEND (sent at 1589233940.997583)
+1589233940.997628: Driver <~~ CHANGE (sent at 1589233940.997585)
+                   [5965: idle -> continued]
+1589233940.997651: Driver <~~ CHANGE (sent at 1589233940.997606)
+                   [5964: continued -> running]
+1589233940.997673: Driver <~~ SEND (sent at 1589233940.997619)
+1589233940.997687: Driver <~~ CHANGE (sent at 1589233940.997621)
+                   [5966: idle -> continued]
+1589233940.997712: Driver <~~ CHANGE (sent at 1589233940.997639)
+                   [5965: continued -> running]
+1589233940.997735: Driver <~~ SEND (sent at 1589233940.997654)
+1589233940.997748: Driver <~~ CHANGE (sent at 1589233940.997656)
+                   [5962: idle -> continued]
+1589233940.997770: Driver <~~ CHANGE (sent at 1589233940.997719)
+                   [5966: continued -> running]
+1589233940.997960: Driver <~~ CHANGE (sent at 1589233940.997917)
+                   [5962: continued -> running]
+1589233940.997991: Driver <~~ CHANGE (sent at 1589233940.997926)
+                   [5967: started -> idle]
+1589233940.997998: Driver <~~ SEND (sent at 1589233940.997936)
+1589233940.998003: Driver <~~ CHANGE (sent at 1589233940.997937)
+                   [5967: idle -> continued]
+1589233940.998034: Driver <~~ CHANGE (sent at 1589233940.998018)
+                   [5967: continued -> running]
+1589233940.998608: Driver <~~ CHANGE (sent at 1589233940.998571)
+                   [5968: started -> idle]
+1589233940.998624: Driver <~~ SEND (sent at 1589233940.998581)
+1589233940.998632: Driver <~~ CHANGE (sent at 1589233940.998582)
+                   [5968: idle -> continued]
+1589233942.023918: Driver <~~ CHANGE (sent at 1589233942.023875)
+Worker 5968 transition (old continued, new running) is too late (exp = 1589233941.098636, sent = 1589233942.023875)
+Event tracker returned an error
+Aborting test tracker_suite/many_workers_several_crypto_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::many_workers_several_crypto_test: (1.03s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::many_workers_several_mixed_test
+Running test tracker_suite/many_workers_several_mixed_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233942.040789: Driver <~~ START (sent at 1589233942.040704)
+                   [expect END]
+1589233942.040918: Driver <~~ CHANGE (sent at 1589233942.040872)
+                   [5978: init -> started]
+1589233942.041000: Driver <~~ CHANGE (sent at 1589233942.040971)
+                   [5979: init -> started]
+1589233942.041097: Driver <~~ CHANGE (sent at 1589233942.041079)
+                   [5980: init -> started]
+1589233942.041227: Driver <~~ CHANGE (sent at 1589233942.041209)
+                   [5981: init -> started]
+1589233942.041355: Driver <~~ CHANGE (sent at 1589233942.041340)
+                   [5982: init -> started]
+1589233942.041460: Driver <~~ CHANGE (sent at 1589233942.041444)
+                   [5983: init -> started]
+1589233942.041600: Driver <~~ CHANGE (sent at 1589233942.041578)
+                   [5984: init -> started]
+1589233942.041724: Driver <~~ CHANGE (sent at 1589233942.041707)
+                   [5985: init -> started]
+1589233942.041851: Driver <~~ CHANGE (sent at 1589233942.041833)
+                   [5986: init -> started]
+1589233942.041974: Driver <~~ CHANGE (sent at 1589233942.041956)
+                   [5987: init -> started]
+1589233942.042372: Driver <~~ CHANGE (sent at 1589233942.042344)
+                   [5978: started -> idle]
+1589233942.042431: Driver <~~ CHANGE (sent at 1589233942.042422)
+                   [5980: started -> idle]
+1589233942.042494: Driver <~~ SEND (sent at 1589233942.042485)
+1589233942.042517: Driver <~~ CHANGE (sent at 1589233942.042510)
+                   [5978: idle -> continued]
+1589233942.042554: Driver <~~ CHANGE (sent at 1589233942.042545)
+                   [5979: started -> idle]
+1589233942.043627: Driver <~~ CHANGE (sent at 1589233942.043587)
+                   [5982: started -> idle]
+1589233942.043701: Driver <~~ CHANGE (sent at 1589233942.043692)
+                   [5981: started -> idle]
+1589233942.043737: Driver <~~ CHANGE (sent at 1589233942.043729)
+                   [5984: started -> idle]
+1589233942.043791: Driver <~~ SEND (sent at 1589233942.043782)
+1589233942.043815: Driver <~~ CHANGE (sent at 1589233942.043807)
+                   [5979: idle -> continued]
+1589233942.043915: Driver <~~ CHANGE (sent at 1589233942.043906)
+                   [5978: continued -> running]
+1589233942.044872: Driver <~~ CHANGE (sent at 1589233942.044813)
+                   [5985: started -> idle]
+1589233942.044904: Driver <~~ SEND (sent at 1589233942.044852)
+1589233942.044910: Driver <~~ CHANGE (sent at 1589233942.044854)
+                   [5980: idle -> continued]
+1589233942.044994: Driver <~~ CHANGE (sent at 1589233942.044938)
+                   [5979: continued -> running]
+1589233942.045052: Driver <~~ CHANGE (sent at 1589233942.044974)
+                   [5980: continued -> running]
+1589233942.045060: Driver <~~ CHANGE (sent at 1589233942.044978)
+                   [5986: started -> idle]
+1589233942.045068: Driver <~~ CHANGE (sent at 1589233942.044981)
+                   [5987: started -> idle]
+1589233942.045078: Driver <~~ SEND (sent at 1589233942.044988)
+1589233942.045089: Driver <~~ CHANGE (sent at 1589233942.044990)
+                   [5981: idle -> continued]
+1589233942.046097: Driver <~~ CHANGE (sent at 1589233942.046079)
+                   [5983: started -> idle]
+1589233942.046136: Driver <~~ SEND (sent at 1589233942.046120)
+1589233942.046167: Driver <~~ CHANGE (sent at 1589233942.046157)
+                   [5982: idle -> continued]
+1589233942.046196: Driver <~~ CHANGE (sent at 1589233942.046185)
+                   [5981: continued -> running]
+1589233943.044331: Driver <~~ CHANGE (sent at 1589233943.044222)
+                   [5978: running -> stopped]
+1589233943.044472: Driver <~~ SEND (sent at 1589233943.044321)
+1589233943.044518: Driver <~~ CHANGE (sent at 1589233943.044326)
+Worker 5983 transition (old idle, new continued) is too late (exp = 1589233942.146108, sent = 1589233943.044326)
+Event tracker returned an error
+Aborting test tracker_suite/many_workers_several_mixed_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::many_workers_several_mixed_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::one_worker_multi_crypto_test
+Running test tracker_suite/one_worker_multi_crypto_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233943.068426: Driver <~~ START (sent at 1589233943.068323)
+                   [expect SEND]
+1589233943.068547: Driver <~~ CHANGE (sent at 1589233943.068517)
+                   [5997: init -> started]
+1589233943.070382: Driver <~~ CHANGE (sent at 1589233943.070296)
+                   [5997: started -> idle]
+1589233943.070432: Driver <~~ SEND (sent at 1589233943.070369)
+                   [expect RECV]
+1589233943.070447: Driver <~~ CHANGE (sent at 1589233943.070373)
+                   [5997: idle -> continued]
+1589233944.070906: Driver <~~ CHANGE (sent at 1589233944.070733)
+Worker 5997 transition (old continued, new running) is too late (exp = 1589233943.170465, sent = 1589233944.070733)
+Event tracker returned an error
+Aborting test tracker_suite/one_worker_multi_crypto_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::one_worker_multi_crypto_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::one_worker_multi_trivial_test
+Running test tracker_suite/one_worker_multi_trivial_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233944.096127: Driver <~~ START (sent at 1589233944.096033)
+                   [expect SEND]
+1589233944.096240: Driver <~~ CHANGE (sent at 1589233944.096213)
+                   [6007: init -> started]
+1589233944.097948: Driver <~~ CHANGE (sent at 1589233944.097859)
+                   [6007: started -> idle]
+1589233944.097992: Driver <~~ SEND (sent at 1589233944.097935)
+                   [expect RECV]
+1589233944.098002: Driver <~~ CHANGE (sent at 1589233944.097939)
+                   [6007: idle -> continued]
+1589233944.108104: Driver: timeout (0, 10000)
+Timeout reading event from child
+Aborting test tracker_suite/one_worker_multi_trivial_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::one_worker_multi_trivial_test: (0.02s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::one_worker_one_crypto_test
+Running test tracker_suite/one_worker_one_crypto_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233944.132525: Driver <~~ START (sent at 1589233944.132428)
+                   [expect SEND]
+1589233944.132658: Driver <~~ CHANGE (sent at 1589233944.132623)
+                   [6017: init -> started]
+1589233944.134177: Driver <~~ CHANGE (sent at 1589233944.134134)
+                   [6017: started -> idle]
+1589233944.134216: Driver <~~ SEND (sent at 1589233944.134190)
+                   [expect RECV]
+1589233944.134228: Driver <~~ CHANGE (sent at 1589233944.134194)
+                   [6017: idle -> continued]
+1589233945.135945: Driver <~~ CHANGE (sent at 1589233945.134472)
+Worker 6017 transition (old continued, new running) is too late (exp = 1589233944.234233, sent = 1589233945.134472)
+Event tracker returned an error
+Aborting test tracker_suite/one_worker_one_crypto_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::one_worker_one_crypto_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::one_worker_one_trivial_test
+Running test tracker_suite/one_worker_one_trivial_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233945.161924: Driver <~~ START (sent at 1589233945.161810)
+                   [expect SEND]
+1589233945.162027: Driver <~~ CHANGE (sent at 1589233945.161994)
+                   [6027: init -> started]
+1589233945.163782: Driver <~~ CHANGE (sent at 1589233945.163700)
+                   [6027: started -> idle]
+1589233945.163848: Driver <~~ SEND (sent at 1589233945.163780)
+                   [expect RECV]
+1589233945.163868: Driver <~~ CHANGE (sent at 1589233945.163783)
+                   [6027: idle -> continued]
+1589233945.174048: Driver: timeout (0, 10000)
+Timeout reading event from child
+Aborting test tracker_suite/one_worker_one_trivial_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::one_worker_one_trivial_test: (0.02s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::start_end_test
+Running test tracker_suite/start_end_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233945.201395: Driver <~~ START (sent at 1589233945.201303)
+                   [expect END]
+1589233945.201535: Driver <~~ CHANGE (sent at 1589233945.201489)
+                   [6037: init -> started]
+1589233945.203201: Driver <~~ CHANGE (sent at 1589233945.203125)
+                   [6037: started -> idle]
+1589233945.203395: Driver <~~ CHANGE (sent at 1589233945.203333)
+                   [6037: idle -> running]
+1589233945.203437: Driver <~~ CHANGE (sent at 1589233945.203363)
+                   [6037: running -> exited]
+1589233945.203447: Driver <~~ END (sent at 1589233945.203367)
+                   [expect EOF]
+Short count reading event
+End of test tracker_suite/start_end_test
+[PASS] tracker_suite::start_end_test: (0.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::two_workers_multi_crypto_test
+Running test tracker_suite/two_workers_multi_crypto_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233945.224512: Driver <~~ START (sent at 1589233945.224413)
+                   [expect END]
+1589233945.224788: Driver <~~ CHANGE (sent at 1589233945.224608)
+                   [6047: init -> started]
+1589233945.224824: Driver <~~ CHANGE (sent at 1589233945.224761)
+                   [6048: init -> started]
+1589233945.226308: Driver <~~ CHANGE (sent at 1589233945.226260)
+                   [6048: started -> idle]
+1589233945.226346: Driver <~~ CHANGE (sent at 1589233945.226287)
+                   [6047: started -> idle]
+1589233945.226357: Driver <~~ SEND (sent at 1589233945.226326)
+1589233945.226365: Driver <~~ CHANGE (sent at 1589233945.226329)
+                   [6047: idle -> continued]
+1589233946.226712: Driver <~~ SEND (sent at 1589233946.226614)
+1589233946.226776: Driver <~~ CHANGE (sent at 1589233946.226642)
+Worker 6048 transition (old idle, new continued) is too late (exp = 1589233945.326336, sent = 1589233946.226642)
+Event tracker returned an error
+Aborting test tracker_suite/two_workers_multi_crypto_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::two_workers_multi_crypto_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::two_workers_multi_trivial_test
+Running test tracker_suite/two_workers_multi_trivial_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233946.252468: Driver <~~ START (sent at 1589233946.252362)
+                   [expect END]
+1589233946.252613: Driver <~~ CHANGE (sent at 1589233946.252562)
+                   [6058: init -> started]
+1589233946.252755: Driver <~~ CHANGE (sent at 1589233946.252722)
+                   [6059: init -> started]
+1589233946.254398: Driver <~~ CHANGE (sent at 1589233946.254288)
+                   [6058: started -> idle]
+1589233946.254436: Driver <~~ CHANGE (sent at 1589233946.254336)
+                   [6059: started -> idle]
+1589233946.254447: Driver <~~ SEND (sent at 1589233946.254365)
+1589233946.254456: Driver <~~ CHANGE (sent at 1589233946.254368)
+                   [6058: idle -> continued]
+1589233946.354632: Driver: timeout (0, 100000)
+Timeout reading event from child
+Aborting test tracker_suite/two_workers_multi_trivial_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::two_workers_multi_trivial_test: (0.11s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::two_workers_one_crypto_test
+Running test tracker_suite/two_workers_one_crypto_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233946.381472: Driver <~~ START (sent at 1589233946.381373)
+                   [expect END]
+1589233946.381772: Driver <~~ CHANGE (sent at 1589233946.381573)
+                   [6069: init -> started]
+1589233946.381812: Driver <~~ CHANGE (sent at 1589233946.381741)
+                   [6070: init -> started]
+1589233946.383208: Driver <~~ CHANGE (sent at 1589233946.383140)
+                   [6069: started -> idle]
+1589233946.383242: Driver <~~ SEND (sent at 1589233946.383194)
+1589233946.383250: Driver <~~ CHANGE (sent at 1589233946.383196)
+                   [6069: idle -> continued]
+1589233946.383551: Driver <~~ CHANGE (sent at 1589233946.383453)
+                   [6070: started -> idle]
+1589233946.383588: Driver <~~ SEND (sent at 1589233946.383512)
+1589233946.383596: Driver <~~ CHANGE (sent at 1589233946.383514)
+                   [6070: idle -> continued]
+1589233946.383604: Driver <~~ CHANGE (sent at 1589233946.383522)
+                   [6069: continued -> running]
+1589233947.388070: Driver <~~ CHANGE (sent at 1589233947.383941)
+Worker 6070 transition (old continued, new running) is too late (exp = 1589233946.483601, sent = 1589233947.383941)
+Event tracker returned an error
+Aborting test tracker_suite/two_workers_one_crypto_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::two_workers_one_crypto_test: (1.01s)
+polya_worker: no process found
+bin/polya: no process found
+[RUN ] tracker_suite::two_workers_one_trivial_test
+Running test tracker_suite/two_workers_one_trivial_test
+                   [expect START]
+Waiting for connection...
+Connected to child: fd = 10
+1589233947.410897: Driver <~~ START (sent at 1589233947.410840)
+                   [expect END]
+1589233947.411231: Driver <~~ CHANGE (sent at 1589233947.411041)
+                   [6080: init -> started]
+1589233947.411273: Driver <~~ CHANGE (sent at 1589233947.411199)
+                   [6081: init -> started]
+1589233947.412848: Driver <~~ CHANGE (sent at 1589233947.412772)
+                   [6080: started -> idle]
+1589233947.412890: Driver <~~ SEND (sent at 1589233947.412838)
+1589233947.412899: Driver <~~ CHANGE (sent at 1589233947.412842)
+                   [6080: idle -> continued]
+1589233947.413055: Driver <~~ CHANGE (sent at 1589233947.413031)
+                   [6081: started -> idle]
+1589233947.413113: Driver <~~ SEND (sent at 1589233947.413070)
+1589233947.413132: Driver <~~ CHANGE (sent at 1589233947.413083)
+                   [6081: idle -> continued]
+1589233947.413202: Driver <~~ CHANGE (sent at 1589233947.413091)
+                   [6080: continued -> running]
+1589233947.513377: Driver: timeout (0, 100000)
+Timeout reading event from child
+Aborting test tracker_suite/two_workers_one_trivial_test
+[----] tests/__helper.c:21: Assertion failed: The test driver returned an error (-1)
+[FAIL] tracker_suite::two_workers_one_trivial_test: (0.11s)
+polya_worker: no process found
+bin/polya: no process found
+[----] Writing xml report in `crit.xml`.
+[====] Synthesis: Tested: 13 | Passing: 1 | Failing: 12 | Crashing: 0 
